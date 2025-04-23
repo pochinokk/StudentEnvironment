@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE-edge">
+        <meta name = "viewport" content="width=device-width, initial-scale=1.0">
+        <title>Админ-панель</title>
+        <link rel="icon" href="/images/icons/favicon.ico" sizes = "any">
+        <link rel="stylesheet" href="/css/admin_style.css">
+        <link rel="stylesheet" href="/css/header_style.css">
+        <link rel="stylesheet" href="/css/footer_style.css">
+        <script src = "/js/burger.js" defer></script>
+    </head>
+    <body>
+    <header th:replace="fragments/header :: header"></header>
+    <main>
+        <div th:if="${mes != null}" id="successful_order">
+            <p th:text="${mes}"></p>
+        </div>
+        <div th:if="${er != null}" id="server_error" >
+            <p th:text="${er}"></p>
+        </div>
+        <!-- Выход -->
+        <form id="account_info" class="text_and_btn" action="/logout" method="post">
+            <p th:text="'Администратор: ' + ${username}"></p>
+            <button id="logout_btn" type="submit">Выйти</button>
+        </form>
+
+        <!-- Добавление -->
+        <form id="save_frm" action="/save_admin_order" method="post">
+            <div class="text_and_btn">
+                <p>Добавить заказ</p>
+                <button id="save_btn" type="submit">Добавить</button>
+            </div>
+            <div class="inputbox">
+                <input type="text" name="username" required placeholder="Имя пользователя">
+            </div>
+            <div class="inputbox" >
+                <input id="product_set_input" type="text" name="str" required placeholder="Растения">
+            </div>
+        </form>
+
+
+        <!-- Удаление -->
+        <form id="delete_frm" action="/delete_order" method="post">
+            <div class="text_and_btn">
+                <p>Удалить заказ по его ID</p>
+                <button id="delete_btn" type="submit">Удалить</button> 
+            </div>
+
+            <div class="inputbox">
+                <input type="text" name="id" required placeholder="ID">
+            </div>
+        </form>
+
+
+        <!-- Поиск всех пользователей -->
+        <form id="find_customers_frm" action="/find_customers" method="get">
+            <div class="text_and_btn">
+                <p>Найти всех пользователей</p>
+                <button id="find_customers_btn" type="submit">Найти</button>
+            </div>
+            <div id="customer_list">
+                <div th:each="cust : ${customers}" class="customer">
+                <p>
+                    <strong th:text="'ID пользователя: '"></strong>
+                    <span th:text="${cust.id}"></span>
+                </p>
+                <p>
+                    <strong th:text="'Имя пользователя: '"></strong>
+                    <span th:text="${cust.name}"></span>
+                </p>
+                <p>
+                    <strong th:text="'Пароль: '"></strong>
+                    <span th:text="${cust.password}"></span>
+                </p>
+                <p>
+                    <strong th:text="'Роль: '"></strong>
+                    <span th:text="${cust.roles}"></span>
+                </p>
+                <p>
+                    <strong th:text="'Телефон: '"></strong>
+                    <span th:text="${cust.tel}"></span>
+                </p>
+                <p>
+                    <strong th:text="'Адрес: '"></strong>
+                    <span th:text="${cust.address}"></span>
+                </p>
+                </div>
+            </div>
+        </form>
+
+
+        <!-- Поиск заказа его по ID -->
+        <form id="find_by_ID_frm" action="/find_order_by_ID" method="get">
+            <div class="text_and_btn">
+                <p>Найти заказ по его ID</p>
+                <button id="find_by_ID_btn" type="submit">Найти</button>
+            </div>
+            <div class="inputbox">
+                <input type="text" name="id" required placeholder="ID">
+            </div>
+            <div class="order" th:if="${order != null}">
+                <p>
+                    <strong th:text="'ID заказа: '"></strong>
+                    <span th:text="${order.id}"></span>
+                </p>
+                <p>
+                    <strong th:text="'Сумма заказа: '"></strong>
+                    <span th:text="${order.amount} + '₽'"></span>
+                </p>
+                <p>
+                    <strong th:text="'Товары: '"></strong>
+                    <span th:text="${order.product_set}"></span>
+                </p>
+                </div>
+        </form>
+
+
+        <!-- Поиск всех заказов пользователя -->
+        <form id="find_orders_frm" action="/find_customer_orders" method="get">
+            <div class="text_and_btn">
+                <p>Найти заказы пользователя</p>
+                <button id="find_orders_btn" type="submit">Найти</button>
+            </div>
+            <div class="inputbox">
+                <input type="text" name="username" required placeholder="Имя пользователя">
+            </div>
+
+            <div id="order_list">
+                <div th:each="ord : ${orders}" class="order">
+                <p>
+                    <strong th:text="'ID заказа: '"></strong>
+                    <span th:text="${ord.id}"></span>
+                </p>
+                <p>
+                    <strong th:text="'Сумма заказа: '"></strong>
+                    <span th:text="${ord.amount} + '₽'"></span>
+                </p>
+                <p>
+                    <strong th:text="'Товары: '"></strong>
+                    <span th:text="${ord.product_set}"></span>
+                </p>
+                </div>
+            </div>
+        </form>
+
+
+        
+    </main>
+    <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

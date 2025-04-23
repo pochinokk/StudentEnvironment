@@ -1,0 +1,128 @@
+*{
+    font-family:"Segoe UI", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+main{
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 50px 50px 0px 50px;
+    font-size: 20px;
+    padding-bottom: 250px;
+}
+#queue_title,
+#empty_title
+{
+    margin-top: 10px;
+    font-weight: 500;
+    font-size: 22px;
+    color: black;
+    white-space: nowrap;
+}
+#logout_btn{
+    font-weight: 500;
+    border: none;
+    font-size: 20px;
+    color: white;
+    text-align: center;
+    background-color: rgb(207, 19, 19);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 35px;
+    width: 85px;
+    line-height: 15px;
+    white-space: nowrap;
+}
+
+#logout_btn:hover{
+    background: rgb(255, 0, 0);
+    transform: scale(1.05);
+}
+#logout_btn:active{
+    background: rgb(143, 14, 14);
+    transform: scale(0.95);
+}
+
+#account_info{
+    font-size: 22px;
+    font-weight: 600;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+.place_list{
+    display: grid;
+    grid-auto-flow: row;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+/*.place{*/
+/*    display: grid;*/
+/*    grid-auto-flow: row;*/
+/*    grid-template-columns: 1fr;*/
+/*    gap: 2px;*/
+/*    !*background: rgb(230, 255, 182);*!*/
+/*    background: rgb(174, 225, 255);*/
+/*    border-radius: 25px;*/
+/*    padding: 20px;*/
+/*    max-width: 500px;*/
+/*    justify-content: start;*/
+/*}*/
+
+.place {
+    display: grid;
+    grid-template-columns: auto 1fr; /* две колонки: аватар и текст */
+    gap: 10px;
+    background: rgb(174, 225, 255);
+    border-radius: 25px;
+    padding: 20px;
+    max-width: 500px;
+    align-items: center;
+}
+
+.avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+.auth{
+    position:relative;
+    width: 240px;
+    height: 80px;
+    border-radius: 20px;
+    backdrop-filter: blur(15px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color:white;
+    text-align: center;
+}
+.error{
+    background: rgba(240, 168, 168, 0.55);
+    border: 2px solid rgba(240, 168, 168);
+}
+.message1{
+    background: rgba(168, 240, 169, 0.55);
+    border: 2px solid rgb(192, 240, 168);
+}
+.message2{
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+.auth_error p {
+    font-size: 20px;
+    font-weight: 600;
+}

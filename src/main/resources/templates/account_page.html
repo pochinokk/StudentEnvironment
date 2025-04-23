@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE-edge">
+        <meta name = "viewport" content="width=device-width, initial-scale=1.0">
+        <title>Личный кабинет</title>
+        <link rel="icon" href="/images/icons/favicon.ico" sizes = "any">
+        <link rel="stylesheet" href="/css/account_style.css">
+        <link rel="stylesheet" href="/css/header_style.css">
+        <link rel="stylesheet" href="/css/footer_style.css">
+        <script src = "/js/burger.js" defer></script>
+    </head>
+    <body>
+        <header th:replace="fragments/header :: header"></header>
+        <main>
+
+            <form id="account_info" action="/logout" method="post">
+                <p th:text="'Ваш аккаунт: ' + ${username}"></p>
+                <button id="logout_btn" type="submit">Выйти</button>
+            </form>
+            <p id="orders_title">Ваши места в очереди:</p>
+            <p id="empty_title" th:if="${#lists.isEmpty(places)}">Вы не стоите в очереди</p>
+            <div id="order_list">
+                <div th:each="place : ${places}" class="order">
+                    <p>
+                        <strong th:text="'Время: '"></strong>
+                        <span th:text="${place.time}"></span>
+                    </p>
+                </div>
+            </div>
+        </main>
+        <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

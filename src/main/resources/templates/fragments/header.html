@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <meta name = "viewport" content="width=device-width, initial-scale=1.0">
+    <title>House plants</title>
+    <link rel="icon" href="/images/icons/favicon.ico" sizes = "any">
+    <link rel="stylesheet" href="/css/header_style.css">
+    <link rel="stylesheet" href="/css/footer_style.css">
+    <script src = "/js/burger.js" defer></script>
+</head>
+<body>
+    <header th:fragment="header">
+
+            <a href="/home">
+                <img class = "header_logo" src="/images/pictures/logo512.png" alt="Логотип" title="Логотип" width = "64" height="64">
+            </a>
+            <label class="header_name">Student Environment</label>
+
+            <ul class = "header_links">
+                <li><a class="link"
+                       th:classappend="${requestURI == '/home'} ? ' current'"
+                       href="/home">Главная</a></li>
+
+                <li><a class="link"
+                       th:classappend="${requestURI == '/authentication'} ? ' current'"
+                       href="/authentication">Войти</a></li>
+
+                <li><a class="link"
+                       th:classappend="${requestURI == '/groups'} ? ' current'"
+                       href="/groups">Группы</a></li>
+
+                <li><a class="link"
+                       th:classappend="${requestURI == '/account'} ? ' current'"
+                       href="/account">Личный кабинет</a></li>
+
+                <li><a class="link"
+                       th:classappend="${requestURI == '/about_us'} ? ' current'"
+                       href="/about_us">О нас</a></li>
+                <li ><a id="user_name" th:text="${username}"></a></li>
+            </ul>
+            <div class = "burger-background"></div>
+            <div class = "navbar">
+
+                <div class = "burger-menu">
+                    <div class="line line-1"></div>
+                    <div class="line line-2"></div>
+                    <div class="line line-3"></div>
+                </div>
+
+
+                <ul class = "nav-list">
+                    <div class = "space_for_x"></div>
+                    <li id="burger_user_name"><p th:text="${username}"></p></li>
+                    <li class="nav-item"><a class="nav-link"
+                                            th:classappend="${requestURI == '/home'} ? ' current'"
+                                            href="/home">Главная</a></li>
+
+                    <li class="nav-item"><a class="nav-link"
+                                            th:classappend="${requestURI == '/authentication'} ? ' current'"
+                                            href="/authentication">Войти</a></li>
+                    <li class="nav-item"><a class="nav-link"
+                                            th:classappend="${requestURI == '/groups'} ? ' current'"
+                                            href="/groups">Группы</a></li>
+
+                    <li class="nav-item"><a class="nav-link"
+                                            th:classappend="${requestURI == '/account'} ? ' current'"
+                                            href="/account">Личный кабинет</a></li>
+                    <li class="nav-item"><a class="nav-link"
+                                            th:classappend="${requestURI == '/about_us'} ? ' current'"
+                                            href="/about_us">О нас</a></li>
+                </ul>
+
+            </div>
+    </header>
+</body>
+</html>

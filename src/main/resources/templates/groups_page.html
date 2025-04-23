@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE-edge">
+  <meta name = "viewport" content="width=device-width, initial-scale=1.0">
+  <title>Список очередей групп</title>
+  <link rel="icon" href="/images/icons/favicon.ico" sizes = "any">
+  <link rel="stylesheet" href="/css/groups_style.css">
+  <link rel="stylesheet" href="/css/header_style.css">
+  <link rel="stylesheet" href="/css/footer_style.css">
+  <script src = "/js/burger.js" defer></script>
+</head>
+<body >
+  <header th:replace="fragments/header :: header"></header>
+  <main>
+    <h2>Список очередей групп</h2>
+    <div class="panel">
+      <div th:each="group : ${groups}">
+        <a th:href="@{'/groups/' + ${group.id}}">
+          <button class="btn" th:text="${group.name}"></button>
+        </a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

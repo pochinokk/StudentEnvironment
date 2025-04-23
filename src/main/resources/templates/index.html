@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <meta name = "viewport" content="width=device-width, initial-scale=1.0">
+    <title>Главная</title>
+    <link rel="icon" href="/images/icons/favicon.ico" sizes = "any">
+    <link rel="stylesheet" href="/css/home_style.css">
+    <link rel="stylesheet" href="/css/header_style.css">
+    <link rel="stylesheet" href="/css/footer_style.css">
+    <script src = "/js/burger.js" defer></script>
+
+</head>
+<body >
+    <header th:replace="fragments/header :: header"></header>
+    <div class = "home-poster">
+
+        <div class="central_container">
+            <img class = "logo" src="/images/pictures/logo512.png" alt="Логотип"  width = "200">
+            <h1>Student environment</h1>
+
+            <p class="signature_under_name">Система управления очередями для сдачи практических работ<br> и взаимодействия студентов</p>
+        </div>
+
+        <div class="overlay">
+        </div>
+    </div>
+    <footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>

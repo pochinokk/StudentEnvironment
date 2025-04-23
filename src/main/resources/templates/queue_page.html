@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Очередь</title>
+    <link rel="icon" href="/images/icons/favicon.ico" sizes="any">
+    <link rel="stylesheet" href="/css/queue_style.css">
+    <link rel="stylesheet" href="/css/header_style.css">
+    <link rel="stylesheet" href="/css/footer_style.css">
+    <script src="/js/burger.js" defer></script>
+    <script src="/js/pixel-avatar.js" defer></script>
+</head>
+<body>
+<header th:replace="fragments/header :: header"></header>
+<main>
+
+    <div th:if="${error}" class="auth error">
+        <p th:text="${error}">Ошибка авторизации</p>
+    </div>
+
+    <h1 th:text="${group_name}"></h1>
+    <div class="place_list">
+        <div th:each="place : ${queue}" class="place">
+            <div class="avatar">
+                <pixel-avatar size="5" pixel-size="8"></pixel-avatar>
+            </div>
+            <div class="info">
+                <p th:text="${place.fullName}"></p>
+            </div>
+
+            <!-- Кнопка удалить: -->
+            <form th:action="@{'/places/delete/' + ${place.placeId}}" method="post"
+                  th:if="${role == 'HEADMAN' or (role == 'STUDENT' and place.userId == userId)}">
+                <button type="submit">Удалить</button>
+            </form>
+
+            <!-- Кнопка обменяться: -->
+            <form th:action="@{'/places/exchange-request/' + ${place.placeId}}" method="post"
+                  th:if="${role == 'STUDENT' and place.userId != userId}">
+                <button type="submit">Обменяться</button>
+            </form>
+
+            <!-- Кнопка вставить перед (только для старосты): -->
+            <form th:action="@{'/places/insert-before/' + ${place.placeId}}" method="post"
+                  th:if="${role == 'HEADMAN'}">
+                <select name="studentId">
+                    <option th:each="s : ${students}" th:value="${s.id}" th:text="${s.full_name}"></option>
+                </select>
+                <button type="submit">Вставить перед</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Кнопка встать в конец очереди (для себя) -->
+    <form th:action="@{/places/add-to-end}" method="post"
+          th:if="${userId != null and isInGroup}">
+        <button type="submit">Встать в очередь</button>
+    </form>
+
+    <!-- Кнопка для HEADMAN/ADMIN — добавить любого студента в конец -->
+    <div th:if="${role == 'HEADMAN' and userId != null and isInGroup}">
+        <h3>Добавить студента в конец:</h3>
+        <form th:each="s : ${students}" th:action="@{/places/add-student-to-end}" method="post">
+            <input type="hidden" name="studentId" th:value="${s.id}"/>
+            <span th:text="${s.full_name}"></span>
+            <button type="submit">Добавить</button>
+        </form>
+    </div>
+
+</main>
+<footer th:replace="fragments/footer :: footer"></footer>
+</body>
+</html>
