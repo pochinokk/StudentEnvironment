@@ -13,21 +13,33 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.security.Principal;
-
+/**
+ * Контроллер управления очередью (местами)
+ */
 @Controller
 @RequestMapping("/places")
 public class PlaceController {
 
     private final PlaceService placeService;
     private final UserService userService;
-
+    /**
+     * Конструктор контроллера
+     * @param placeService сервис для работы с местами
+     * @param userService сервис для работы с пользователями
+     */
     @Autowired
     public PlaceController(PlaceService placeService, UserService userService) {
         this.placeService = placeService;
         this.userService = userService;
     }
 
-    // Удалить место
+    /**
+     * Метод удаления места
+     * @param placeId идентификатор места
+     * @param principal текущий пользователь
+     * @return редирект на страницу группы
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'STUDENT', 'HEADMAN')")
     @PostMapping("/delete/{placeId}")
     public String deletePlace(@PathVariable Long placeId, Principal principal) {
         System.out.println("Удаляем место");
@@ -37,7 +49,12 @@ public class PlaceController {
     }
 
 
-    // Встать в конец очереди
+    /**
+     * Метод постановки пользователя в конец очереди
+     * @param principal текущий пользователь
+     * @param redirectAttributes атрибуты для передачи сообщений
+     * @return редирект на страницу группы
+     */
     @PreAuthorize("hasAnyAuthority('ADMIN', 'STUDENT', 'HEADMAN')")
     @PostMapping("/add-to-end")
     public String addToEnd(Principal principal, RedirectAttributes redirectAttributes) {
@@ -52,7 +69,12 @@ public class PlaceController {
         return "redirect:/groups/" + user.getGroup().getId();
     }
 
-    // Запрос на обмен местами
+    /**
+     * Метод запроса обмена местами
+     * @param placeId идентификатор места
+     * @param principal текущий пользователь
+     * @return редирект на страницу группы
+     */
     @PreAuthorize("hasAnyAuthority('ADMIN', 'STUDENT', 'HEADMAN')")
     @PostMapping("/exchange-request/{placeId}")
     public String requestExchange(@PathVariable Long placeId, Principal principal) {
@@ -61,7 +83,13 @@ public class PlaceController {
         return "redirect:/groups/" + fromUser.getGroup().getId();
     }
 
-    // Добавление перед другим пользователем (для старосты)
+    /**
+     * Метод вставки студента перед другим студентом (только для старосты)
+     * @param placeId идентификатор целевого места
+     * @param studentId идентификатор вставляемого студента
+     * @param principal текущий пользователь
+     * @return редирект на страницу группы
+     */
     @PreAuthorize("hasAnyAuthority('ADMIN', 'HEADMAN')")
     @PostMapping("/insert-before/{placeId}")
     public String insertBefore(@PathVariable Long placeId,
@@ -71,8 +99,13 @@ public class PlaceController {
         placeService.insertBefore(placeId, studentId, headman);
         return "redirect:/groups/" + headman.getGroup().getId();
     }
-
-    // Староста или админ добавляет другого студента в конец
+    /**
+     * Метод добавления студента в конец очереди старостой
+     * @param studentId идентификатор студента
+     * @param principal текущий пользователь
+     * @param redirectAttributes атрибуты для передачи сообщений
+     * @return редирект на страницу группы
+     */
     @PreAuthorize("hasAnyAuthority('ADMIN', 'HEADMAN')")
     @PostMapping("/add-student-to-end")
     public String addStudentToEnd(@RequestParam Long studentId, Principal principal, RedirectAttributes redirectAttributes) {

@@ -38,6 +38,10 @@
                 <li><a class="link"
                        th:classappend="${requestURI == '/about_us'} ? ' current'"
                        href="/about_us">О нас</a></li>
+                <li><a class="link"
+                       th:classappend="${requestURI == '/channel'} ? ' current'"
+                       href="/channel">Канал старосты</a></li>
+
                 <li ><a id="user_name" th:text="${username}"></a></li>
             </ul>
             <div class = "burger-background"></div>
@@ -70,6 +74,9 @@
                     <li class="nav-item"><a class="nav-link"
                                             th:classappend="${requestURI == '/about_us'} ? ' current'"
                                             href="/about_us">О нас</a></li>
+                    <li class="nav-item"><a class="nav-link"
+                                            th:classappend="${requestURI == '/channel'} ? ' current'"
+                                            href="/channel">Канал старосты</a></li>
                 </ul>
 
             </div>

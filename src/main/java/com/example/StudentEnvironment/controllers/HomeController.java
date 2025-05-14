@@ -7,15 +7,15 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 /**
- * Класс представляет собой контроллер.
- * Обрабатывает запросы на предоставление страницы главной страницы.
+ *  Контроллер главной страницы
  */
 @Controller
 public class HomeController {
     /**
-     * Метод получения главной страницы
-     * @param model объект Model, содержащий атрибуты для рендеринга представления
-     * @return имя представления для главной страницы
+     * Метод отображения главной страницы "/"
+     * @param request HTTP-запрос
+     * @param model объект Model для передачи данных в представление
+     * @return имя представления главной страницы
      */
     @GetMapping("/")
     public String home(HttpServletRequest request, Model model) {
@@ -30,9 +30,10 @@ public class HomeController {
         return "index";
     }
     /**
-     * Метод получения главной страницы
-     * @param model объект Model, содержащий атрибуты для рендеринга представления
-     * @return имя представления для главной страницы
+     * Метод отображения альтернативной главной страницы "/home"
+     * @param request HTTP-запрос
+     * @param model объект Model для передачи данных в представление
+     * @return имя представления главной страницы
      */
     @GetMapping("/home")
     public String home2(HttpServletRequest request, Model model) {

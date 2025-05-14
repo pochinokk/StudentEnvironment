@@ -8,7 +8,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-
+/**
+ * Сущность места в очереди
+ */
 @Builder
 @Entity
 @Data
@@ -16,14 +18,18 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Table(name = "places")
 public class Place {
+    /** Идентификатор места */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+    /** Время добавления в очередь */
     @Column(name = "time")
     private LocalDateTime time;
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", unique = true)
+
+    /** Пользователь, занимающий место */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
 }

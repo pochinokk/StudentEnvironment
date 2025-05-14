@@ -16,34 +16,36 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 /**
- * Класс отвечает за настройку Spring Security.
- * Генерирует бины, отвечающие за авторизацию и хеширование паролей.
+ * Класс {@code SecurityConfig} отвечает за настройку Spring Security.
+ * Генерирует необходимые бины для аутентификации, авторизации и хеширования паролей.
  */
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
     /**
-     * Метод создания сервиса для работы с правами доступа пользователя
-     * @return сервис для работы с правами доступа пользователя
+     * Создаёт сервис, предоставляющий информацию о пользователях для Spring Security.
+     *
+     * @return реализация {@link UserDetailsService}
      */
     @Bean
     public UserDetailsService userDetailsService() {
         return new CustomUserDetailsService();
     }
+
     /**
-     * Метод конфигурации цепочки фильтров безопасности для приложения
-     * @param http запрос
-     * @return цепочка фильтров безопасности для приложения
-     * @throws Exception если возникает ошибка при конфигурации безопасности
+     * Конфигурирует цепочку фильтров безопасности для обработки HTTP-запросов.
+     *
+     * @param http объект конфигурации безопасности
+     * @return цепочка фильтров безопасности
+     * @throws Exception в случае ошибки конфигурации
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.requestMatchers(new AntPathRequestMatcher("/**"))
-                        .permitAll().anyRequest()
-                        .permitAll())
+                        .permitAll().anyRequest().permitAll())
                 .formLogin(login -> login
                         .loginPage("/authentication")
                         .loginProcessingUrl("/authenticate")
@@ -52,12 +54,13 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutSuccessUrl("/home")
                         .invalidateHttpSession(true)
-                        .deleteCookies("JSESSIONID")
-                )
+                        .deleteCookies("JSESSIONID"))
                 .build();
     }
+
     /**
-     * Метод определения и настройки провайдера аутентификации для приложения
+     * Определяет провайдер аутентификации с использованием DAO и хеширования паролей.
+     *
      * @return провайдер аутентификации
      */
     @Bean
@@ -67,9 +70,11 @@ public class SecurityConfig {
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
+
     /**
-     * Метод подключения хеширования пароля
-     * @return кодировщий пароля
+     * Определяет механизм хеширования паролей с использованием {@link BCryptPasswordEncoder}.
+     *
+     * @return энкодер паролей
      */
     @Bean
     public PasswordEncoder passwordEncoder() {

@@ -18,13 +18,21 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-
+/**
+ * Контроллер управления группами и отображением очередей.
+ */
 @Controller
 @AllArgsConstructor
 public class GroupController {
     private UserService userService;
     private GroupService groupService;
-
+    /**
+     * Отображение страницы со списком групп.
+     *
+     * @param request HTTP-запрос
+     * @param model модель представления
+     * @return имя представления: groups_page
+     */
     @GetMapping("/groups")
     public String groups(HttpServletRequest request, Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -40,6 +48,14 @@ public class GroupController {
         return "groups_page";
     }
 
+    /**
+     * Отображение страницы очереди конкретной группы.
+     *
+     * @param groupId ID группы
+     * @param model модель представления
+     * @param session HTTP-сессия
+     * @return имя представления: queue_page
+     */
     @GetMapping("/groups/{groupId}")
     public String getGroupQueue(@PathVariable Long groupId,
                                 Model model,
@@ -73,15 +89,20 @@ public class GroupController {
 
         List<QueueEntryDTO> queue = new ArrayList<>();
         for (User u : group.getUsers()) {
-            Place place = u.getPlace(); // теперь один, а не список
-            if (place != null) {
-                queue.add(new QueueEntryDTO(
-                        place.getId(),
-                        u.getFull_name(),
-                        place.getTime(),
-                        u.getId()
-                ));
+            List<Place> places = u.getPlaces();
+            if (!places.isEmpty())
+            {
+                Place place = u.getPlaces().get(0);
+                if (place != null) {
+                    queue.add(new QueueEntryDTO(
+                            place.getId(),
+                            u.getFull_name(),
+                            place.getTime(),
+                            u.getId()
+                    ));
+                }
             }
+
         }
 
 

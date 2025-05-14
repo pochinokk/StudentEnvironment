@@ -1,6 +1,7 @@
 package com.example.StudentEnvironment.controllers;
 
 
+import com.example.StudentEnvironment.entities.Group;
 import com.example.StudentEnvironment.entities.User;
 import com.example.StudentEnvironment.entities.Place;
 import com.example.StudentEnvironment.services.UserService;
@@ -19,9 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 /**
- * Класс представляет собой контроллер.
- * Обрабатывает запросы на предоставление страницы
- * личного кабинета пользователя и администратора.
+ * Контроллер, управляющий действиями на странице личного кабинета.
  */
 @Controller
 @AllArgsConstructor
@@ -30,10 +29,12 @@ public class AccountController {
     private PlaceService placeService;
     private UserService userService;
     /**
-     * Метод получения страницы личного кабинета
-     *  @param model объект Model, содержащий атрибуты для рендеринга представления
-     *  @param session объект, необходимы для получения имени текущего пользователя
-     *  @return имя представления для страницы "Личный кабинет"
+     * Обработка запроса на отображение страницы личного кабинета.
+     *
+     * @param request HTTP-запрос
+     * @param model модель представления
+     * @param session HTTP-сессия
+     * @return имя представления: account_page или admin_page
      */
     @GetMapping("/account")
     @PreAuthorize("hasAnyAuthority('STUDENT', 'HEADMAN','ADMIN')")
@@ -45,7 +46,13 @@ public class AccountController {
             username = "Вы не авторизованы";
         }
         model.addAttribute("username", username);
+        Long user_id = userService.getIDByName(username);
+        User user = userService.findById(user_id);
+        model.addAttribute("user", user);
+        Group group = user.getGroup();
+        model.addAttribute("group", group);
         model.addAttribute("requestURI", request.getRequestURI());
+
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ADMIN"));
         Long id = userService.getIDByName(username);
@@ -58,14 +65,14 @@ public class AccountController {
         }
     }
 
-    /**
-     * Метод сохранения заказа администратором
-     *  @param model объект Model, содержащий атрибуты для рендеринга представления
-     *  @param str объект, содержащий набор продуктов
-     *  @param username объект, имя текущего пользователя
-     *  @param redirectAttributes объект, сохраняющий сообщение для пользователя при переходе
-     *  @return имя представления для страницы "Личный кабинет"
-     */
+//    /**
+//     * Метод сохранения заказа администратором
+//     *  @param model объект Model, содержащий атрибуты для рендеринга представления
+//     *  @param str объект, содержащий набор продуктов
+//     *  @param username объект, имя текущего пользователя
+//     *  @param redirectAttributes объект, сохраняющий сообщение для пользователя при переходе
+//     *  @return имя представления для страницы "Личный кабинет"
+//     */
 //    @PostMapping("/admin_save_place")
 //    @PreAuthorize("hasAuthority('ADMIN')")
 //    public String save_admin_place(@RequestParam("username") String username,
@@ -95,11 +102,12 @@ public class AccountController {
 //        }
 //    }
     /**
-     * Метод удаления заказа администратором
-     *  @param model объект Model, содержащий атрибуты для рендеринга представления
-     *  @param place_id объект, содержащий номер заказа
-     *  @param redirectAttributes объект, сохраняющий сообщение для пользователя при переходе
-     *  @return имя представления для страницы "Личный кабинет"
+     * Удаление места администратором.
+     *
+     * @param place_id ID заказа
+     * @param model модель представления
+     * @param redirectAttributes атрибуты перенаправления
+     * @return редирект на страницу личного кабинета
      */
     @PostMapping("/delete_place")
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -116,10 +124,11 @@ public class AccountController {
         }
     }
     /**
-     * Метод поиска всех пользователей
-     *  @param model объект Model, содержащий атрибуты для рендеринга представления
-     *  @param redirectAttributes объект, сохраняющий сообщение для пользователя при переходе
-     *  @return имя представления для страницы "Личный кабинет"
+     * Получение списка всех пользователей.
+     *
+     * @param model модель представления
+     * @param redirectAttributes атрибуты перенаправления
+     * @return редирект на страницу личного кабинета
      */
     @GetMapping("/users")
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -133,11 +142,12 @@ public class AccountController {
 
 
     /**
-     * Метод поиска заказа администратором
-     *  @param place_id объект, содержащий номер заказа
-     *  @param model объект Model, содержащий атрибуты для рендеринга представления
-     *  @param redirectAttributes объект, сохраняющий сообщение для пользователя при переходе
-     *  @return имя представления для страницы "Личный кабинет"
+     * Поиск места по ID администратором.
+     *
+     * @param place_id ID заказа
+     * @param model модель представления
+     * @param redirectAttributes атрибуты перенаправления
+     * @return редирект на страницу личного кабинета
      */
     @GetMapping("/find_place_by_ID")
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -153,26 +163,27 @@ public class AccountController {
             return "redirect:/account";
         }
     }
-    /**
-     * Метод поиска всех заказов пользователя
-     *  @param username объект, имя текущего пользователя
-     *  @param model объект Model, содержащий атрибуты для рендеринга представления
-     *  @param redirectAttributes объект, сохраняющий сообщение для пользователя при переходе
-     *  @return имя представления для страницы "Личный кабинет"
-     */
-    @GetMapping("/find_user_places")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public String find_user_places(@RequestParam("username") String username,
-                                       Model model, RedirectAttributes redirectAttributes) {
-        if (userService.exists(username) && !username.equals("anonymousUser")) {
-            Long id = userService.getIDByName(username);
-            Iterable<Place> places = placeService.readAllByUserId(id);
-            redirectAttributes.addFlashAttribute("places", places);
-            return "redirect:/account";
-        }
-        redirectAttributes.addFlashAttribute("er", "Такого пользователя нет");
-        return "redirect:/account";
-    }
+//    /**
+//     * Поиск всех мест пользователя по имени.
+//     *
+//     * @param username имя пользователя
+//     * @param model модель представления
+//     * @param redirectAttributes атрибуты перенаправления
+//     * @return редирект на страницу личного кабинета
+//     */
+//    @GetMapping("/find_user_places")
+//    @PreAuthorize("hasAuthority('ADMIN')")
+//    public String find_user_places(@RequestParam("username") String username,
+//                                       Model model, RedirectAttributes redirectAttributes) {
+//        if (userService.exists(username) && !username.equals("anonymousUser")) {
+//            Long id = userService.getIDByName(username);
+//            Iterable<Place> places = placeService.readAllByUserId(id);
+//            redirectAttributes.addFlashAttribute("places", places);
+//            return "redirect:/account";
+//        }
+//        redirectAttributes.addFlashAttribute("er", "Такого пользователя нет");
+//        return "redirect:/account";
+//    }
 }
 
 

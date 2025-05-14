@@ -12,7 +12,7 @@ main{
     gap: 20px;
     padding: 50px 50px 0px 50px;
     font-size: 20px;
-    padding-bottom: 250px;
+    padding-bottom: 500px;
 }
 #queue_title,
 #empty_title
@@ -97,7 +97,60 @@ main{
     justify-content: center;
     gap: 4px;
 }
+.green_btn,
+.red_btn,
+.brown_btn
+{
+    font-weight: 500;
+    border: none;
+    font-size: 20px;
+    color: white;
+    text-align: center;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 35px;
+    line-height: 15px;
+    white-space: nowrap;
+    padding: 0 15px 0 15px;
+    margin: 5px;
+    width: fit-content;
+}
+#plus_button{
+    font-weight: 700;
+    font-size: 25px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
 
+
+.red_btn{
+    background-color: rgb(207, 19, 19);
+}
+
+.red_btn:hover{
+    background: rgb(255, 0, 0);
+    transform: scale(1.05);
+}
+
+.red_btn:active{
+    background: rgb(143, 14, 14);
+    transform: scale(0.95);
+}
+
+.green_btn
+{
+    background-color: rgb(0, 110, 0);
+}
+
+.green_btn:hover{
+    background: rgb(0, 151, 0);
+    transform: scale(1.05);
+}
+.green_btn:active{
+    background: rgb(0, 68, 0);
+    transform: scale(0.95);
+}
 .auth{
     position:relative;
     width: 240px;

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE-edge">
+        <meta name = "viewport" content="width=device-width, initial-scale=1.0">
+        <title>Канал старосты</title>
+        <link rel="icon" href="/images/icons/favicon.ico" sizes = "any">
+        <link rel="stylesheet" href="/css/queue_style.css">
+        <link rel="stylesheet" href="/css/header_style.css">
+        <link rel="stylesheet" href="/css/footer_style.css">
+        <script src = "/js/burger.js" defer></script>
+
+    </head>
+    <body >
+        <header th:replace="fragments/header :: header"></header>
+        <main>
+            <h2>Канал старосты</h2>
+
+            <div th:if="${isHeadman}">
+                <form th:action="@{/channel/add}" method="post" th:object="${newMessage}">
+                    <textarea th:field="*{text}" placeholder="Введите сообщение..."></textarea>
+                    <button class="green_btn" type="submit">Отправить</button>
+                </form>
+            </div>
+
+            <div class="messages">
+                <div th:each="msg : ${messages}">
+                    <p><b th:text="${#temporals.format(msg.time, 'dd.MM.yyyy HH:mm')}"></b>: <span th:text="${msg.text}"></span></p>
+                    <form th:if="${isHeadman}" th:action="@{'/channel/delete/' + ${msg.id}}" method="post">
+                        <button class="red_btn" type="submit">Удалить</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+        <footer th:replace="fragments/footer :: footer"></footer>
+    </body>
+</html>

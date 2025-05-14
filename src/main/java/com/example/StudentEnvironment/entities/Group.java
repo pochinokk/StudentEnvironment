@@ -7,7 +7,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-
+/**
+ * Сущность группы студентов
+ */
 @Builder
 @Entity
 @Data
@@ -15,12 +17,15 @@ import java.util.List;
 @NoArgsConstructor
 @Table(name = "groups")
 public class Group {
+    /** Идентификатор группы */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Long id;
+    /** Уникальное название группы */
     @Column(unique = true, name = "name")
     private String name;
+    /** Список пользователей, входящих в группу */
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<User> users;
 }

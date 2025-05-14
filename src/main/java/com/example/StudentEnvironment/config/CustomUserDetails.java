@@ -12,24 +12,30 @@ import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
- * Класс представляет собой реализацию интерфейса,
- * отвечающего за управление правами дооступа пользователей.
+ * Класс {@code CustomUserDetails} представляет собой реализацию интерфейса {@link org.springframework.security.core.userdetails.UserDetails},
+ * отвечающего за управление правами доступа пользователей.
+ * Инкапсулирует объект {@link com.example.StudentEnvironment.entities.User}.
  */
 @AllArgsConstructor
 public class CustomUserDetails implements UserDetails {
     /**
-     * Поле содержащее пользователя
+     * Объект пользователя.
      */
     private User user;
+
     /**
-     * Метод получения ID пользователя
+     * Возвращает ID пользователя.
+     *
      * @return ID пользователя
      */
     public Long getId() {
         return user.getId();
     }
+
     /**
-     * Метод получения прав доступа пользователя
+     * Возвращает коллекцию прав пользователя на основе его роли.
+     *
+     * @return коллекция прав доступа
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -37,43 +43,61 @@ public class CustomUserDetails implements UserDetails {
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }
+
     /**
-     * Метод получения пароля пользователя
+     * Возвращает пароль пользователя.
+     *
+     * @return пароль
      */
     @Override
     public String getPassword() {
         return user.getPassword();
     }
+
     /**
-     * Метод получения имени пользователя
+     * Возвращает имя пользователя.
+     *
+     * @return имя пользователя
      */
     @Override
     public String getUsername() {
         return user.getUsername();
     }
+
     /**
-     * Метод проверки просроченности аккаунта
+     * Проверяет, не просрочен ли аккаунт.
+     *
+     * @return {@code true}, если аккаунт действителен
      */
     @Override
     public boolean isAccountNonExpired() {
         return true;
     }
+
     /**
-     * Метод проверки заблокированности аккаунта
+     * Проверяет, не заблокирован ли аккаунт.
+     *
+     * @return {@code true}, если аккаунт не заблокирован
      */
     @Override
     public boolean isAccountNonLocked() {
         return true;
     }
+
     /**
-     * Метод проверки просроченности данных
+     * Проверяет, не просрочены ли учетные данные.
+     *
+     * @return {@code true}, если учетные данные действительны
      */
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
+
     /**
-     * Метод проверки доступности аккаунта
+     * Проверяет, активен ли аккаунт.
+     *
+     * @return {@code true}, если аккаунт активен
      */
     @Override
     public boolean isEnabled() {

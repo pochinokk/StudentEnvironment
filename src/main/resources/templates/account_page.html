@@ -19,16 +19,21 @@
                 <p th:text="'Ваш аккаунт: ' + ${username}"></p>
                 <button id="logout_btn" type="submit">Выйти</button>
             </form>
-            <p id="orders_title">Ваши места в очереди:</p>
-            <p id="empty_title" th:if="${#lists.isEmpty(places)}">Вы не стоите в очереди</p>
-            <div id="order_list">
-                <div th:each="place : ${places}" class="order">
-                    <p>
-                        <strong th:text="'Время: '"></strong>
-                        <span th:text="${place.time}"></span>
-                    </p>
-                </div>
+            <div>
+                <p th:text="'Полное имя: ' + ${user.full_name}"></p>
+                <p th:text="'Группа: ' + ${group.name}"></p>
             </div>
+<!--            <p id="orders_title">Ваше место в очереди:</p>-->
+<!--            <p id="empty_title" th:if="${#lists.isEmpty(places)}">Вы не стоите в очереди</p>-->
+<!--            <div id="order_list">-->
+<!--                <div th:each="place : ${places}" class="order">-->
+<!--                    <p>-->
+<!--                        <strong th:text="'Время: '"></strong>-->
+<!--                        <span th:text="${#temporals.format(place.time, 'dd.MM.yyyy HH:mm')}"></span>-->
+<!--                    </p>-->
+<!--                </div>-->
+<!--            </div>-->
+
         </main>
         <footer th:replace="fragments/footer :: footer"></footer>
 </body>

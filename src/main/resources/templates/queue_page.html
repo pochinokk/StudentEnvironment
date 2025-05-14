@@ -33,13 +33,13 @@
             <!-- Кнопка удалить: -->
             <form th:action="@{'/places/delete/' + ${place.placeId}}" method="post"
                   th:if="${role == 'HEADMAN' or (role == 'STUDENT' and place.userId == userId)}">
-                <button type="submit">Удалить</button>
+                <button class="red_btn" type="submit">Удалить</button>
             </form>
 
             <!-- Кнопка обменяться: -->
             <form th:action="@{'/places/exchange-request/' + ${place.placeId}}" method="post"
                   th:if="${role == 'STUDENT' and place.userId != userId}">
-                <button type="submit">Обменяться</button>
+                <button class="green_btn" type="submit">Обменяться</button>
             </form>
 
             <!-- Кнопка вставить перед (только для старосты): -->
@@ -48,7 +48,7 @@
                 <select name="studentId">
                     <option th:each="s : ${students}" th:value="${s.id}" th:text="${s.full_name}"></option>
                 </select>
-                <button type="submit">Вставить перед</button>
+                <button class="green_btn" type="submit">Вставить перед</button>
             </form>
         </div>
     </div>
@@ -56,7 +56,7 @@
     <!-- Кнопка встать в конец очереди (для себя) -->
     <form th:action="@{/places/add-to-end}" method="post"
           th:if="${userId != null and isInGroup}">
-        <button type="submit">Встать в очередь</button>
+        <button class="green_btn" type="submit">Встать в очередь</button>
     </form>
 
     <!-- Кнопка для HEADMAN/ADMIN — добавить любого студента в конец -->
@@ -65,7 +65,7 @@
         <form th:each="s : ${students}" th:action="@{/places/add-student-to-end}" method="post">
             <input type="hidden" name="studentId" th:value="${s.id}"/>
             <span th:text="${s.full_name}"></span>
-            <button type="submit">Добавить</button>
+            <button class="green_btn"  type="submit">Добавить</button>
         </form>
     </div>
 

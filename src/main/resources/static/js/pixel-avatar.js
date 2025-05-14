@@ -10,9 +10,9 @@ class PixelAvatar extends HTMLElement {
         const matrix = this.generateSymmetricMatrix(size);
 
         const neonColors = [
-            '#a0f8b0', // мятный
+            '#5eed74', // мятный
             '#ffa3b1', // пастельно-розовый
-            '#aeceff', // светло-голубой
+            '#70a1f2', // светло-голубой
             '#dab6fc', // светлая сирень
             '#e3c100'  // тёмно-жёлтый (золотистый)
         ];

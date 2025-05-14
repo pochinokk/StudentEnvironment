@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-
+/**
+ * Сервис для работы с очередью мест.
+ */
 @Service
 @AllArgsConstructor
 public class PlaceService {
@@ -37,7 +39,7 @@ public class PlaceService {
     /**
      * Метод проверки существования места
      * @param id ID места
-     * @return иситина или ложь
+     * @return истина или ложь
      */
     public boolean exists(Long id) {
         List<Place> places = placeRepository.findAll();
@@ -50,6 +52,7 @@ public class PlaceService {
     }
 
 
+
     /**
      * Метод получения всех мест
      * @return список всех мест
@@ -57,8 +60,9 @@ public class PlaceService {
     public List<Place> readAll() {
         return placeRepository.findAll();
     }
+
     /**
-     * Метод получения всех мест определенного пользователя по его ID
+     * Метод получения всех мест определенного пользователя
      * @param id ID пользователя
      * @return список мест пользователя
      */
@@ -76,7 +80,7 @@ public class PlaceService {
     }
     /**
      * Метод получения места по ID
-     * @param place_id объект, содержащий ID места
+     * @param place_id ID места
      * @return место
      */
     public Place getPlaceByID(Long place_id){
@@ -88,7 +92,11 @@ public class PlaceService {
         }
         return null;
     }
-
+    /**
+     * Метод удаления места. Доступен владельцу или старосте.
+     * @param placeId ID места
+     * @param currentUser текущий пользователь
+     */
     public void deletePlace(Long placeId, User currentUser) {
         Place place = placeRepository.findById(placeId)
                 .orElseThrow(() -> new RuntimeException("Place not found"));
@@ -104,7 +112,10 @@ public class PlaceService {
         placeRepository.deleteById(placeId);
         System.out.println("Удалили место");
     }
-
+    /**
+     * Метод добавления пользователя в конец очереди
+     * @param user пользователь
+     */
     public void addToEnd(User user) {
         // Удаляем старое место, если есть
         Place oldPlace = placeRepository.findByUser(user);
@@ -131,7 +142,11 @@ public class PlaceService {
         }
     }
 
-
+    /**
+     * Метод отправки заявки на обмен местами
+     * @param fromUser отправитель
+     * @param toPlaceId ID места, с которым хотят обменяться
+     */
     public void requestExchange(User fromUser, Long toPlaceId) {
         Place toPlace = placeRepository.findById(toPlaceId)
                 .orElseThrow(() -> new RuntimeException("Place not found"));
@@ -145,7 +160,12 @@ public class PlaceService {
         userRepository.save(fromUser);
     }
 
-
+    /**
+     * Метод вставки пользователя перед другим. Доступен только старосте.
+     * @param beforePlaceId ID места перед которым нужно вставить
+     * @param studentId ID студента
+     * @param headman текущий пользователь (должен быть старостой)
+     */
     public void insertBefore(Long beforePlaceId, Long studentId, User headman) {
         if (!headman.getRole().equals("HEADMAN")) {
             throw new AccessDeniedException("Только староста может вставлять студентов");
@@ -176,6 +196,10 @@ public class PlaceService {
         }
     }
 
+    /**
+     * Метод удаления места по ID
+     * @param id ID места
+     */
     public void delete(Long id) {
         placeRepository.deleteById(id);
     }

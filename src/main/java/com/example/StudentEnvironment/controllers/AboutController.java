@@ -6,8 +6,20 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+/**
+ * Контроллер {@code AboutController} обрабатывает запросы к странице "О нас".
+ * Отображает имя текущего пользователя и URI запроса.
+ */
 @Controller
 public class AboutController {
+
+    /**
+     * Обрабатывает GET-запрос к странице "О нас".
+     *
+     * @param request HTTP-запрос
+     * @param model модель данных для отображения
+     * @return имя шаблона страницы
+     */
     @GetMapping("/about_us")
     public String about(HttpServletRequest request, Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

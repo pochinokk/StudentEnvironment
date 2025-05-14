@@ -20,6 +20,9 @@ public class CustomUserDetailsService implements UserDetailsService {
     private UserRepository repository;
     /**
      * Метод поиска пользователя по имени
+     * @param username имя пользователя
+     * @return объект UserDetails
+     * @throws UsernameNotFoundException если пользователь не найден
      */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

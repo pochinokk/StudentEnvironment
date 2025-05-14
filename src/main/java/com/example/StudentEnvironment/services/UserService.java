@@ -9,7 +9,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+/**
+ * Сервис для работы с пользователями.
+ */
 @Service
 @AllArgsConstructor
 public class UserService {
@@ -19,8 +21,10 @@ public class UserService {
     /**
      * Метод создания пользователя в таблице
      * @param username логин
-     * @param password пароль пользователя
-     * @param role права доступа пользователя
+     * @param password пароль
+     * @param full_name ФИО
+     * @param role роль
+     * @param group_id ID группы
      */
     public void create(String username, String password, String full_name, String role, Long group_id) {
         Group group = groupRepository.findById(group_id)
@@ -38,7 +42,7 @@ public class UserService {
     /**
      * Метод проверки существования пользователя
      * @param username логин
-     * @return иситина или ложь
+     * @return истина или ложь
      */
     public boolean exists(String username) {
         List<User> users = userRepository.findAll();
@@ -65,21 +69,21 @@ public class UserService {
         return (long) -1;
     }
     /**
-     * Метод получения всех пользователей из таблицы
-     * @return все пользователи
+     * Метод получения всех пользователей
+     * @return список пользователей
      */
     public List<User> readAll() {
         return userRepository.findAll();
     }
     /**
-     * Метод удаления пользователя из таблицы
+     * Метод удаления пользователя по ID
      * @param id ID
      */
     public void delete(Long id) {
         userRepository.deleteById(id);
     }
     /**
-     * Метод замены пароля пользователя
+     * Метод изменения пароля пользователя
      * @param username логин
      * @param newPassword новый пароль
      */
@@ -100,10 +104,20 @@ public class UserService {
             System.out.println("Пользователь не найден");
         }
     }
+    /**
+     * Метод получения пользователя по ID
+     * @param userId ID пользователя
+     * @return пользователь
+     */
     public User findById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
     }
+    /**
+     * Метод получения пользователя по имени
+     * @param username логин
+     * @return пользователь
+     */
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Пользователь не найден"));

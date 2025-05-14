@@ -7,7 +7,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
+/**
+ * Сервис для управления сущностями Group
+ */
 @Service
 @AllArgsConstructor
 public class GroupService {
@@ -26,7 +28,7 @@ public class GroupService {
     /**
      * Метод проверки существования группы
      * @param name название группы
-     * @return иситина или ложь
+     * @return истина, если группа существует
      */
     public boolean exists(String name) {
         List<Group> groups = groupRepository.findAll();
@@ -41,7 +43,7 @@ public class GroupService {
     /**
      * Метод получения ID группы по названию
      * @param name название группы
-     * @return ID
+     * @return ID группы, либо -1 если не найдена
      */
     public Long getIDByName(String name) {
         List<Group> groups = groupRepository.findAll();
@@ -53,20 +55,24 @@ public class GroupService {
         return (long) -1;
     }
     /**
-     * Метод получения всех пользователей из таблицы
-     * @return все группы
+     * Метод получения всех групп
+     * @return список всех групп
      */
     public List<Group> readAll() {
         return groupRepository.findAll();
     }
     /**
-     * Метод удаления группы из таблицы
-     * @param id ID
+     * Метод удаления группы по ID
+     * @param id идентификатор группы
      */
     public void delete(Long id) {
         groupRepository.deleteById(id);
     }
-
+    /**
+     * Метод поиска группы по ID
+     * @param groupId идентификатор группы
+     * @return объект Group
+     */
     public Group findById(Long groupId) {
         return groupRepository.findById(groupId)
                 .orElseThrow(() -> new RuntimeException("Группа не найдена"));
