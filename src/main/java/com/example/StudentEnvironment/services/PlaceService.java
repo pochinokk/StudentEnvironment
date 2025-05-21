@@ -166,35 +166,80 @@ public class PlaceService {
      * @param studentId ID студента
      * @param headman текущий пользователь (должен быть старостой)
      */
+    @Transactional
     public void insertBefore(Long beforePlaceId, Long studentId, User headman) {
-        if (!headman.getRole().equals("HEADMAN")) {
+        // Проверка на роль
+        if (!"HEADMAN".equals(headman.getRole())) {
             throw new AccessDeniedException("Только староста может вставлять студентов");
         }
 
+        // Поиск студента
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        // Удаляем старое место студента, если есть
-        Place existingPlace = placeRepository.findByUser(student);
-        if (existingPlace != null) {
-            placeRepository.delete(existingPlace);
-        }
-
+        // Поиск места, перед которым вставляем
         Place beforePlace = placeRepository.findById(beforePlaceId)
                 .orElseThrow(() -> new RuntimeException("Place not found"));
 
+        // Если студент пытается вставить себя перед собой — ничего не делаем
+        if (beforePlace.getUser().getId().equals(student.getId())) {
+            System.out.println("Пользователь уже стоит на этом месте");
+            return;
+        }
+
+        // Назначаем новое время чуть раньше
         LocalDateTime newTime = beforePlace.getTime().minusNanos(1);
 
-        if (existingPlace == null) {
-            Place newPlace = new Place();
-            newPlace.setUser(student);
-            newPlace.setTime(newTime);
-            placeRepository.save(newPlace);
-        } else {
-            existingPlace.setTime(newTime);
-            placeRepository.save(existingPlace);
+        // Либо обновляем время, либо создаём новую запись
+        Place place = placeRepository.findByUser(student);
+        if (place == null) {
+            place = new Place();
+            place.setUser(student);
         }
+
+        place.setTime(newTime);
+        placeRepository.save(place);
     }
+
+//    public void insertBefore(Long beforePlaceId, Long studentId, User headman) {
+//        if (!headman.getRole().equals("HEADMAN")) {
+//            throw new AccessDeniedException("Только староста может вставлять студентов");
+//        }
+//
+//        User student = userRepository.findById(studentId)
+//                .orElseThrow(() -> new RuntimeException("Student not found"));
+//
+//        // Удаляем старое место студента, если есть
+//        Place existingPlace = placeRepository.findByUser(student);
+//        if (existingPlace != null) {
+//            placeRepository.delete(existingPlace);
+//        }
+//
+//        Place beforePlace = placeRepository.findById(beforePlaceId)
+//                .orElseThrow(() -> new RuntimeException("Place not found"));
+//
+//        LocalDateTime newTime = beforePlace.getTime().minusNanos(1);
+////
+////        if (existingPlace == null) {
+////            Place newPlace = new Place();
+////            newPlace.setUser(student);
+////            newPlace.setTime(newTime);
+////            placeRepository.save(newPlace);
+////        } else {
+////            existingPlace.setTime(newTime);
+////            placeRepository.save(existingPlace);
+////        }
+//
+//
+//        Place place = placeRepository.findByUser(student);
+//
+//        if (place == null) {
+//            place = new Place();
+//            place.setUser(student);
+//        }
+//        place.setTime(beforePlace.getTime().minusNanos(1));
+//        placeRepository.save(place);
+//    }
 
     /**
      * Метод удаления места по ID

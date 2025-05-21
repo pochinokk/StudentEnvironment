@@ -1,0 +1,2014 @@
+
+/* ./DTO/QueueEntryDTO.java */
+package com.example.StudentEnvironment.DTO;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+/**
+ * Класс DTO для представления записи в очереди
+ */
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class QueueEntryDTO {
+    /** Идентификатор места */
+    private Long placeId;
+    /** Полное имя пользователя */
+    private String fullName;
+    /** Время добавления в очередь */
+    private LocalDateTime time;
+    /** Идентификатор пользователя */
+    private Long userId;
+    /**
+     * Конструктор без идентификаторов
+     * @param fullName полное имя пользователя
+     * @param time время добавления
+     */
+    public QueueEntryDTO(String fullName, LocalDateTime time) {
+        this.fullName = fullName;
+        this.time = time;
+    }
+}
+        
+/* ./PasswordHasher.java */
+package com.example.StudentEnvironment;
+;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+/**
+ * Класс для хэширования паролей (для тестов и отладки).
+ */
+public class PasswordHasher {
+    public static void main(String[] args) {
+        PasswordEncoder encoder = new BCryptPasswordEncoder();
+        String rawPassword = "1234";
+        String hashedPassword = encoder.encode(rawPassword);
+        System.out.println("Hashed password: " + hashedPassword);
+    }
+}
+        
+/* ./StudentEnvironmentApplication.java */
+package com.example.StudentEnvironment;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+/**
+ * Главный класс запуска Spring Boot приложения.
+ */
+@SpringBootApplication
+public class StudentEnvironmentApplication {
+
+	public static void main(String[] args) {
+		SpringApplication.run(StudentEnvironmentApplication.class, args);
+	}
+
+}
+
+        
+/* ./config/CustomUserDetails.java */
+package com.example.StudentEnvironment.config;
+
+
+import com.example.StudentEnvironment.entities.User;
+import lombok.AllArgsConstructor;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.stream.Collectors;
+
+/**
+ * Класс {@code CustomUserDetails} представляет собой реализацию интерфейса {@link org.springframework.security.core.userdetails.UserDetails},
+ * отвечающего за управление правами доступа пользователей.
+ * Инкапсулирует объект {@link com.example.StudentEnvironment.entities.User}.
+ */
+@AllArgsConstructor
+public class CustomUserDetails implements UserDetails {
+    /**
+     * Объект пользователя.
+     */
+    private User user;
+
+    /**
+     * Возвращает ID пользователя.
+     *
+     * @return ID пользователя
+     */
+    public Long getId() {
+        return user.getId();
+    }
+
+    /**
+     * Возвращает коллекцию прав пользователя на основе его роли.
+     *
+     * @return коллекция прав доступа
+     */
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Arrays.stream(user.getRole().split(", "))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Возвращает пароль пользователя.
+     *
+     * @return пароль
+     */
+    @Override
+    public String getPassword() {
+        return user.getPassword();
+    }
+
+    /**
+     * Возвращает имя пользователя.
+     *
+     * @return имя пользователя
+     */
+    @Override
+    public String getUsername() {
+        return user.getUsername();
+    }
+
+    /**
+     * Проверяет, не просрочен ли аккаунт.
+     *
+     * @return {@code true}, если аккаунт действителен
+     */
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    /**
+     * Проверяет, не заблокирован ли аккаунт.
+     *
+     * @return {@code true}, если аккаунт не заблокирован
+     */
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    /**
+     * Проверяет, не просрочены ли учетные данные.
+     *
+     * @return {@code true}, если учетные данные действительны
+     */
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    /**
+     * Проверяет, активен ли аккаунт.
+     *
+     * @return {@code true}, если аккаунт активен
+     */
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+}
+
+        
+/* ./config/SecurityConfig.java */
+package com.example.StudentEnvironment.config;
+
+import com.example.StudentEnvironment.services.CustomUserDetailsService;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+/**
+ * Класс {@code SecurityConfig} отвечает за настройку Spring Security.
+ * Генерирует необходимые бины для аутентификации, авторизации и хеширования паролей.
+ */
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    /**
+     * Создаёт сервис, предоставляющий информацию о пользователях для Spring Security.
+     *
+     * @return реализация {@link UserDetailsService}
+     */
+    @Bean
+    public UserDetailsService userDetailsService() {
+        return new CustomUserDetailsService();
+    }
+
+    /**
+     * Конфигурирует цепочку фильтров безопасности для обработки HTTP-запросов.
+     *
+     * @param http объект конфигурации безопасности
+     * @return цепочка фильтров безопасности
+     * @throws Exception в случае ошибки конфигурации
+     */
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http.csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.requestMatchers(new AntPathRequestMatcher("/**"))
+                        .permitAll().anyRequest().permitAll())
+                .formLogin(login -> login
+                        .loginPage("/authentication")
+                        .loginProcessingUrl("/authenticate")
+                        .permitAll())
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .logoutSuccessUrl("/home")
+                        .invalidateHttpSession(true)
+                        .deleteCookies("JSESSIONID"))
+                .build();
+    }
+
+    /**
+     * Определяет провайдер аутентификации с использованием DAO и хеширования паролей.
+     *
+     * @return провайдер аутентификации
+     */
+    @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService());
+        provider.setPasswordEncoder(passwordEncoder());
+        return provider;
+    }
+
+    /**
+     * Определяет механизм хеширования паролей с использованием {@link BCryptPasswordEncoder}.
+     *
+     * @return энкодер паролей
+     */
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+}
+
+        
+/* ./controllers/AboutController.java */
+package com.example.StudentEnvironment.controllers;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+
+/**
+ * Контроллер {@code AboutController} обрабатывает запросы к странице "О нас".
+ * Отображает имя текущего пользователя и URI запроса.
+ */
+@Controller
+public class AboutController {
+
+    /**
+     * Обрабатывает GET-запрос к странице "О нас".
+     *
+     * @param request HTTP-запрос
+     * @param model модель данных для отображения
+     * @return имя шаблона страницы
+     */
+    @GetMapping("/about_us")
+    public String about(HttpServletRequest request, Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        if (username.equals("anonymousUser")) {
+            username = "Вы не авторизованы";
+        }
+        model.addAttribute("username", username);
+        model.addAttribute("requestURI", request.getRequestURI());
+        return "about_us_page";
+    }
+}
+
+        
+/* ./controllers/AccountController.java */
+package com.example.StudentEnvironment.controllers;
+
+
+import com.example.StudentEnvironment.entities.ExchangeRequest;
+import com.example.StudentEnvironment.entities.Group;
+import com.example.StudentEnvironment.entities.User;
+import com.example.StudentEnvironment.entities.Place;
+import com.example.StudentEnvironment.services.ExchangeService;
+import com.example.StudentEnvironment.services.UserService;
+import com.example.StudentEnvironment.services.PlaceService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+
+/**
+ * Контроллер, управляющий действиями на странице личного кабинета.
+ */
+@Controller
+@AllArgsConstructor
+public class AccountController {
+    @Autowired
+    private PlaceService placeService;
+    private UserService userService;
+    private final ExchangeService exchangeService;
+    /**
+     * Обработка запроса на отображение страницы личного кабинета.
+     *
+     * @param request HTTP-запрос
+     * @param model модель представления
+     * @param session HTTP-сессия
+     * @return имя представления: account_page или admin_page
+     */
+    @GetMapping("/account")
+    @PreAuthorize("hasAnyAuthority('STUDENT', 'HEADMAN','ADMIN')")
+    public String personalAccount(HttpServletRequest request, Model model, HttpSession session) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        session.setAttribute("username", username);
+        if (username.equals("anonymousUser")) {
+            username = "Вы не авторизованы";
+        }
+        model.addAttribute("username", username);
+        Long user_id = userService.getIDByName(username);
+        User user = userService.findById(user_id);
+        model.addAttribute("user", user);
+        Group group = user.getGroup();
+        model.addAttribute("group", group);
+        model.addAttribute("requestURI", request.getRequestURI());
+        // Входящие запросы — кто отправил тебе запрос на обмен
+        User currentUser = userService.getCurrentUser();
+        List<ExchangeRequest> incomingRequests = exchangeService.findRequestsToUser(currentUser);
+        model.addAttribute("incomingRequests", incomingRequests);
+
+        // Есть ли исходящий запрос (к кому ты отправил)
+        boolean hasOutgoingRequest = currentUser.getExchange_user() != null;
+        model.addAttribute("hasOutgoingRequest", hasOutgoingRequest);
+
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ADMIN"));
+        Long id = userService.getIDByName(username);
+        if (isAdmin) {
+            return "admin_page";
+        } else {
+            Iterable<Place> places = placeService.readAllByUserId(id);
+            model.addAttribute("places", places);
+            return "account_page";
+        }
+    }
+
+//    /**
+//     * Метод сохранения заказа администратором
+//     *  @param model объект Model, содержащий атрибуты для рендеринга представления
+//     *  @param str объект, содержащий набор продуктов
+//     *  @param username объект, имя текущего пользователя
+//     *  @param redirectAttributes объект, сохраняющий сообщение для пользователя при переходе
+//     *  @return имя представления для страницы "Личный кабинет"
+//     */
+//    @PostMapping("/admin_save_place")
+//    @PreAuthorize("hasAuthority('ADMIN')")
+//    public String save_admin_place(@RequestParam("username") String username,
+//                                   @RequestParam("str") String str,
+//                                   Model model, RedirectAttributes redirectAttributes) {
+//        String amount = placeService.getPlaceAmount(str);
+//        Long user_id = userService.getIDByName(username);
+//        str = str.replace("_", " ");
+//        System.out.println(str);
+//        System.out.println(amount);
+//        System.out.println(user_id);
+//        if (!amount.equals("-1") && !amount.equals("0") && user_id > 0) {
+//            placeService.create(amount, str, user_id);
+//            System.out.println("OK");
+//            redirectAttributes.addFlashAttribute("mes", "Заказ успешно создан");
+//            return "redirect:/account";
+//        } else if (amount.equals("-1") && user_id < 0){
+//            redirectAttributes.addFlashAttribute("er", "Ошибка в обоих полях");
+//            return "redirect:/account";
+//        } else if (amount.equals("-1")) {
+//            redirectAttributes.addFlashAttribute("er", "Ошибка в наборе растений");
+//            return "redirect:/account";
+//        }
+//        else {
+//            redirectAttributes.addFlashAttribute("er", "Пользователь не существует");
+//            return "redirect:/account";
+//        }
+//    }
+
+//    /**
+//     * Поиск всех мест пользователя по имени.
+//     *
+//     * @param username имя пользователя
+//     * @param model модель представления
+//     * @param redirectAttributes атрибуты перенаправления
+//     * @return редирект на страницу личного кабинета
+//     */
+//    @GetMapping("/find_user_places")
+//    @PreAuthorize("hasAuthority('ADMIN')")
+//    public String find_user_places(@RequestParam("username") String username,
+//                                       Model model, RedirectAttributes redirectAttributes) {
+//        if (userService.exists(username) && !username.equals("anonymousUser")) {
+//            Long id = userService.getIDByName(username);
+//            Iterable<Place> places = placeService.readAllByUserId(id);
+//            redirectAttributes.addFlashAttribute("places", places);
+//            return "redirect:/account";
+//        }
+//        redirectAttributes.addFlashAttribute("er", "Такого пользователя нет");
+//        return "redirect:/account";
+//    }
+
+
+    @PostMapping("/exchange/send")
+    public String sendExchange(@RequestParam Long toUserId) {
+        User from = userService.getCurrentUser();
+        User to = userService.findById(toUserId);
+        exchangeService.sendExchangeRequest(from, to);
+        return "redirect:/account";
+    }
+
+    @PostMapping("/exchange/cancel")
+    public String cancelExchange() {
+        User from = userService.getCurrentUser();
+        exchangeService.cancelExchangeRequest(from);
+        return "redirect:/account";
+    }
+
+    @PostMapping("/exchange/confirm")
+    public String confirmExchange(@RequestParam Long requestId) {
+        exchangeService.confirmExchangeRequest(requestId);
+        return "redirect:/account";
+    }
+}
+
+
+
+
+
+
+        
+/* ./controllers/AuthenticationController.java */
+package com.example.StudentEnvironment.controllers;
+
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+/**
+ * Контроллер аутентификации пользователей.
+ */
+@Controller
+public class AuthenticationController {
+    /**
+     * Отображение страницы аутентификации.
+     *
+     * @param request HTTP-запрос
+     * @param model модель представления
+     * @return имя представления: authentication_page
+     */
+    @GetMapping("/authentication")
+    public String authentication(HttpServletRequest request, Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        if (username.equals("anonymousUser")) {
+            username = "Вы не авторизованы";
+        }
+        model.addAttribute("username", username);
+        model.addAttribute("requestURI", request.getRequestURI());
+        return "authentication_page";
+    }
+}
+        
+/* ./controllers/GroupController.java */
+package com.example.StudentEnvironment.controllers;
+import com.example.StudentEnvironment.DTO.QueueEntryDTO;
+import com.example.StudentEnvironment.entities.Group;
+import com.example.StudentEnvironment.entities.Place;
+import com.example.StudentEnvironment.entities.User;
+import com.example.StudentEnvironment.services.GroupService;
+import com.example.StudentEnvironment.services.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import lombok.AllArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+/**
+ * Контроллер управления группами и отображением очередей.
+ */
+@Controller
+@AllArgsConstructor
+public class GroupController {
+    private UserService userService;
+    private GroupService groupService;
+    /**
+     * Отображение страницы со списком групп.
+     *
+     * @param request HTTP-запрос
+     * @param model модель представления
+     * @return имя представления: groups_page
+     */
+    @GetMapping("/groups")
+    public String groups(HttpServletRequest request, Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        if (username.equals("anonymousUser")) {
+            username = "Вы не авторизованы";
+        }
+        model.addAttribute("username", username);
+        model.addAttribute("requestURI", request.getRequestURI());
+        List<Group> groups = groupService.readAll(); // <-- добавляем группы
+        model.addAttribute("groups", groups);        // <-- передаём в модель
+
+        return "groups_page";
+    }
+
+    /**
+     * Отображение страницы очереди конкретной группы.
+     *
+     * @param groupId ID группы
+     * @param model модель представления
+     * @param session HTTP-сессия
+     * @return имя представления: queue_page
+     */
+    @GetMapping("/groups/{groupId}")
+    public String getGroupQueue(@PathVariable Long groupId,
+                                Model model,
+                                HttpSession session) {
+        Group group = groupService.findById(groupId);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        if (username.equals("anonymousUser")) {
+            username = "Вы не авторизованы";
+        }
+        model.addAttribute("username", username);
+
+        // Для шаблона Thymeleaf: если не авторизован — роль "GUEST"
+        String role = "GUEST";
+        Long userId = -1L;
+
+        if (!username.equals("Вы не авторизованы")) {
+            Long id = userService.getIDByName(username);
+            User user = userService.findById(id);
+            role = user.getRole().toString(); // предполагается, что роль — это enum
+            userId = user.getId();
+        }
+
+        System.out.println(role);
+        System.out.println(userId);
+        System.out.println(group.getName());
+        model.addAttribute("role", role);
+        model.addAttribute("userId", userId); // понадобится в шаблоне
+        model.addAttribute("group_name", group.getName());
+
+        List<QueueEntryDTO> queue = new ArrayList<>();
+        for (User u : group.getUsers()) {
+            List<Place> places = u.getPlaces();
+            if (!places.isEmpty())
+            {
+                Place place = u.getPlaces().get(0);
+                if (place != null) {
+                    queue.add(new QueueEntryDTO(
+                            place.getId(),
+                            u.getFull_name(),
+                            place.getTime(),
+                            u.getId()
+                    ));
+                }
+            }
+
+        }
+
+
+        queue.sort(Comparator.comparing(QueueEntryDTO::getTime));
+        model.addAttribute("queue", queue);
+
+        // Добавим список студентов группы, если пользователь — староста
+        if ("HEADMAN".equals(role)) {
+            model.addAttribute("students", group.getUsers());
+        }
+        final Long finalUserId = userId;
+        boolean isInGroup = group.getUsers().stream()
+                .anyMatch(u -> u.getId().equals(finalUserId));
+
+        model.addAttribute("isInGroup", isInGroup);
+
+        return "queue_page";
+    }
+
+
+
+}
+
+        
+/* ./controllers/HomeController.java */
+package com.example.StudentEnvironment.controllers;
+
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+/**
+ *  Контроллер главной страницы
+ */
+@Controller
+public class HomeController {
+    /**
+     * Метод отображения главной страницы "/"
+     * @param request HTTP-запрос
+     * @param model объект Model для передачи данных в представление
+     * @return имя представления главной страницы
+     */
+    @GetMapping("/")
+    public String home(HttpServletRequest request, Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        if (username.equals("anonymousUser")) {
+            username = "Вы не авторизованы";
+        }
+        model.addAttribute("username", username);
+        model.addAttribute("requestURI", request.getRequestURI());
+        System.out.println(request.getRequestURI());
+        return "index";
+    }
+    /**
+     * Метод отображения альтернативной главной страницы "/home"
+     * @param request HTTP-запрос
+     * @param model объект Model для передачи данных в представление
+     * @return имя представления главной страницы
+     */
+    @GetMapping("/home")
+    public String home2(HttpServletRequest request, Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        if (username.equals("anonymousUser")) {
+            username = "Вы не авторизованы";
+        }
+        model.addAttribute("username", username);
+        model.addAttribute("requestURI", request.getRequestURI());
+        return "index";
+    }
+}
+
+        
+/* ./controllers/MessageController.java */
+package com.example.StudentEnvironment.controllers;
+
+import com.example.StudentEnvironment.entities.Message;
+import com.example.StudentEnvironment.entities.User;
+import com.example.StudentEnvironment.repositories.MessageRepository;
+import com.example.StudentEnvironment.services.MessageService;
+import com.example.StudentEnvironment.services.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
+import java.time.LocalDateTime;
+import java.util.List;
+/**
+ * Контроллер канала сообщений для старосты и студентов
+ */
+@Controller
+@RequiredArgsConstructor
+@RequestMapping("/channel")
+public class MessageController {
+
+    private final MessageRepository messageRepository;
+    private final UserService userService;
+
+    /**
+     * Метод отображения канала сообщений
+     * @param request HTTP-запрос
+     * @param model объект Model
+     * @param principal текущий пользователь
+     * @return имя представления канала
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'STUDENT', 'HEADMAN')")
+    @GetMapping
+    public String showChannel(HttpServletRequest request, Model model, Principal principal) {
+        // Получаем имя пользователя из контекста безопасности
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        // Проверяем, авторизован ли пользователь
+        if (username.equals("anonymousUser")) {
+            model.addAttribute("username", "Вы не авторизованы");
+            return "channel";  // Можно вернуть просто канал с уведомлением об отсутствии авторизации
+        }
+
+        // Получаем пользователя по имени из базы данных
+        User currentUser = userService.findByUsername(username);
+
+        if (currentUser == null) {
+            model.addAttribute("error", "Пользователь не найден");
+            return "channel";
+        }
+
+        // Получаем сообщения из группы пользователя
+        List<Message> messages = messageRepository.findByGroup(currentUser.getGroup());
+
+        // Проверяем, является ли пользователь старостой
+        boolean isHeadman = "HEADMAN".equals(currentUser.getRole());
+
+        // Добавляем атрибуты для отображения в модели
+        model.addAttribute("username", username);
+        model.addAttribute("messages", messages);
+        model.addAttribute("isHeadman", isHeadman);
+        model.addAttribute("newMessage", new Message());
+        model.addAttribute("requestURI", request.getRequestURI());
+        return "channel";
+    }
+    /**
+     * Метод добавления сообщения старостой
+     * @param message сообщение
+     * @param principal текущий пользователь
+     * @return редирект на канал
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HEADMAN')")
+    @PostMapping("/add")
+    public String addMessage(@ModelAttribute Message message, Principal principal) {
+        User currentUser = userService.findByUsername(principal.getName());
+
+        if (!"HEADMAN".equals(currentUser.getRole())) {
+            return "redirect:/channel?error";
+        }
+
+        message.setGroup(currentUser.getGroup());
+        message.setTime(LocalDateTime.now());
+        messageRepository.save(message);
+        return "redirect:/channel";
+    }
+    /**
+     * Метод удаления сообщения старостой
+     * @param id идентификатор сообщения
+     * @param principal текущий пользователь
+     * @return редирект на канал
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HEADMAN')")
+    @PostMapping("/delete/{id}")
+    public String deleteMessage(@PathVariable Long id, Principal principal) {
+        User currentUser = userService.findByUsername(principal.getName());
+
+        if (!"HEADMAN".equals(currentUser.getRole())) {
+            return "redirect:/channel?error";
+        }
+
+        Message message = messageRepository.findById(id)
+                .orElse(null);
+
+        if (message == null || !message.getGroup().equals(currentUser.getGroup())) {
+            return "redirect:/channel?error";
+        }
+
+        messageRepository.delete(message);
+        return "redirect:/channel";
+    }
+}
+
+
+
+
+        
+/* ./controllers/PlaceController.java */
+package com.example.StudentEnvironment.controllers;
+
+import com.example.StudentEnvironment.entities.User;
+import com.example.StudentEnvironment.services.PlaceService;
+import com.example.StudentEnvironment.services.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.security.Principal;
+/**
+ * Контроллер управления очередью (местами)
+ */
+@Controller
+@RequestMapping("/places")
+public class PlaceController {
+
+    private final PlaceService placeService;
+    private final UserService userService;
+    /**
+     * Конструктор контроллера
+     * @param placeService сервис для работы с местами
+     * @param userService сервис для работы с пользователями
+     */
+    @Autowired
+    public PlaceController(PlaceService placeService, UserService userService) {
+        this.placeService = placeService;
+        this.userService = userService;
+    }
+
+    /**
+     * Метод удаления места
+     * @param placeId идентификатор места
+     * @param principal текущий пользователь
+     * @return редирект на страницу группы
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'STUDENT', 'HEADMAN')")
+    @PostMapping("/delete/{placeId}")
+    public String deletePlace(@PathVariable Long placeId, Principal principal) {
+        System.out.println("Удаляем место");
+        User user = userService.findByUsername(principal.getName());
+        placeService.deletePlace(placeId, user);
+        return "redirect:/groups/" + user.getGroup().getId();
+    }
+
+
+    /**
+     * Метод постановки пользователя в конец очереди
+     * @param principal текущий пользователь
+     * @param redirectAttributes атрибуты для передачи сообщений
+     * @return редирект на страницу группы
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'STUDENT', 'HEADMAN')")
+    @PostMapping("/add-to-end")
+    public String addToEnd(Principal principal, RedirectAttributes redirectAttributes) {
+        User user = userService.findByUsername(principal.getName());
+
+        try {
+            placeService.addToEnd(user);
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/groups/" + user.getGroup().getId();
+    }
+
+    /**
+     * Метод запроса обмена местами
+     * @param placeId идентификатор места
+     * @param principal текущий пользователь
+     * @return редирект на страницу группы
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'STUDENT', 'HEADMAN')")
+    @PostMapping("/exchange-request/{placeId}")
+    public String requestExchange(@PathVariable Long placeId, Principal principal) {
+        User fromUser = userService.findByUsername(principal.getName());
+        placeService.requestExchange(fromUser, placeId);
+        return "redirect:/groups/" + fromUser.getGroup().getId();
+    }
+
+    /**
+     * Метод вставки студента перед другим студентом (только для старосты)
+     * @param placeId идентификатор целевого места
+     * @param studentId идентификатор вставляемого студента
+     * @param principal текущий пользователь
+     * @return редирект на страницу группы
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HEADMAN')")
+    @PostMapping("/insert-before/{placeId}")
+    public String insertBefore(@PathVariable Long placeId,
+                               @RequestParam Long studentId,
+                               Principal principal) {
+        User headman = userService.findByUsername(principal.getName());
+        placeService.insertBefore(placeId, studentId, headman);
+        return "redirect:/groups/" + headman.getGroup().getId();
+    }
+    /**
+     * Метод добавления студента в конец очереди старостой
+     * @param studentId идентификатор студента
+     * @param principal текущий пользователь
+     * @param redirectAttributes атрибуты для передачи сообщений
+     * @return редирект на страницу группы
+     */
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'HEADMAN')")
+    @PostMapping("/add-student-to-end")
+    public String addStudentToEnd(@RequestParam Long studentId, Principal principal, RedirectAttributes redirectAttributes) {
+        User headman = userService.findByUsername(principal.getName());
+        User student = userService.findById(studentId);
+
+        try {
+            placeService.addToEnd(student); // добавляем студента, а не headman'а
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/groups/" + headman.getGroup().getId();
+    }
+}
+
+
+        
+/* ./entities/ExchangeRequest.java */
+package com.example.StudentEnvironment.entities;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Entity
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Table(name = "exchange_requests")
+public class ExchangeRequest {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "from_user_id", nullable = false)
+    private User fromUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "to_user_id", nullable = false)
+    private User toUser;
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+}
+
+        
+/* ./entities/Group.java */
+package com.example.StudentEnvironment.entities;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+/**
+ * Сущность группы студентов
+ */
+@Builder
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "groups")
+public class Group {
+    /** Идентификатор группы */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
+    /** Уникальное название группы */
+    @Column(unique = true, name = "name")
+    private String name;
+    /** Список пользователей, входящих в группу */
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<User> users;
+}
+
+        
+/* ./entities/Message.java */
+package com.example.StudentEnvironment.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+/**
+ * Сущность сообщения в канале группы
+ */
+@Builder
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "messages")
+public class Message {
+    /** Идентификатор сообщения */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
+    /** Текст сообщения */
+    @Column(name = "text")
+    private String text;
+    /** Время отправки сообщения */
+    @Column(name = "time")
+    private LocalDateTime time;
+    /** Группа, к которой относится сообщение */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    @JsonIgnore
+    private Group group;
+}
+
+        
+/* ./entities/Place.java */
+package com.example.StudentEnvironment.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+/**
+ * Сущность места в очереди
+ */
+@Builder
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "places")
+public class Place {
+    /** Идентификатор места */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
+    /** Время добавления в очередь */
+    @Column(name = "time")
+    private LocalDateTime time;
+
+    /** Пользователь, занимающий место */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    @JsonIgnore
+    private User user;
+}
+
+        
+/* ./entities/User.java */
+package com.example.StudentEnvironment.entities;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.util.List;
+/**
+ * Сущность пользователя
+ */
+@Builder
+@Entity
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Table(name = "users")
+public class User {
+    /** Идентификатор пользователя */
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
+    /** Уникальное имя пользователя */
+    @Column(unique = true, name = "username")
+    private String username;
+    /** Пароль */
+    @Column(name = "password")
+    private String password;
+    /** Полное имя пользователя */
+    @Column(name = "full_name")
+    private String full_name;
+    /** Роль пользователя (STUDENT, HEADMAN, ADMIN) */
+    @Column(name = "role")
+    private String role;
+    /** Пользователь, с которым предложен обмен местами */
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exchange_user_id")
+    private User exchange_user;
+    /** Группа пользователя */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    @JsonIgnore
+    private Group group;
+    /** Место в очереди, связанное с пользователем */
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Place> places;
+}
+
+        
+/* ./repositories/ExchangeRequestRepository.java */
+package com.example.StudentEnvironment.repositories;
+
+import com.example.StudentEnvironment.entities.ExchangeRequest;
+import com.example.StudentEnvironment.entities.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+
+public interface ExchangeRequestRepository extends JpaRepository<ExchangeRequest, Long> {
+    boolean existsByFromUser(User fromUser);
+
+    void deleteByFromUser(User fromUser);
+
+    void deleteByFromUserOrToUser(User user1, User user2);
+
+    List<ExchangeRequest> findByToUser(User toUser);
+}
+
+        
+/* ./repositories/GroupRepository.java */
+package com.example.StudentEnvironment.repositories;
+
+import com.example.StudentEnvironment.entities.Group;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+/**
+ * Репозиторий для работы с сущностью Group
+ */
+@Repository
+public interface GroupRepository extends JpaRepository<Group, Long> {
+}
+
+        
+/* ./repositories/MessageRepository.java */
+package com.example.StudentEnvironment.repositories;
+
+import com.example.StudentEnvironment.entities.Group;
+import com.example.StudentEnvironment.entities.Message;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+/**
+ * Репозиторий для работы с сущностью Message
+ */
+public interface MessageRepository extends JpaRepository<Message, Long> {
+    /**
+     * Метод для получения сообщений по объекту группы
+     * @param group объект группы
+     * @return список сообщений
+     */
+    List<Message> findByGroup(Group group);
+    /**
+     * Метод для получения сообщений по ID группы
+     * @param groupId идентификатор группы
+     * @return список сообщений
+     */
+    List<Message> findByGroupId(Long groupId);
+}
+
+        
+/* ./repositories/PlaceRepository.java */
+package com.example.StudentEnvironment.repositories;
+
+import com.example.StudentEnvironment.entities.Place;
+import com.example.StudentEnvironment.entities.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+
+import java.time.LocalDateTime;
+
+/**
+ * Репозиторий для работы с сущностью Place
+ */
+@Repository
+public interface PlaceRepository extends JpaRepository<Place, Long> {
+    /**
+     * Метод для поиска места по пользователю
+     * @param user пользователь
+     * @return объект Place
+     */
+    Place findByUser(User user);
+
+    /**
+     * Метод для получения максимального времени из всех мест
+     * @return максимальное время
+     */
+    @Query("SELECT MAX(p.time) FROM Place p")
+    LocalDateTime findMaxTime();
+}
+
+        
+/* ./repositories/UserRepository.java */
+package com.example.StudentEnvironment.repositories;
+
+import com.example.StudentEnvironment.entities.User;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+/**
+ * Репозиторий для работы с сущностью User
+ */
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    /**
+     * Метод поиска пользователя по имени
+     * @param username имя пользователя
+     * @return объект Optional с пользователем
+     */
+    Optional<User> findByUsername(String username);
+}
+
+        
+/* ./services/CustomUserDetailsService.java */
+package com.example.StudentEnvironment.services;
+
+import com.example.StudentEnvironment.config.CustomUserDetails;
+import com.example.StudentEnvironment.entities.User;
+import com.example.StudentEnvironment.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+/**
+ * Класс представляет собой реализацию сервиса
+ * для работы с правами доступа пользователей.
+ */
+@Service
+public class CustomUserDetailsService implements UserDetailsService {
+    @Autowired
+    private UserRepository repository;
+    /**
+     * Метод поиска пользователя по имени
+     * @param username имя пользователя
+     * @return объект UserDetails
+     * @throws UsernameNotFoundException если пользователь не найден
+     */
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        Optional<User> user = repository.findByUsername(username);
+        return user.map(CustomUserDetails::new)
+                .orElseThrow(() -> new UsernameNotFoundException(username + "не найден"));
+    }
+
+}
+        
+/* ./services/ExchangeService.java */
+package com.example.StudentEnvironment.services;
+
+import com.example.StudentEnvironment.entities.ExchangeRequest;
+import com.example.StudentEnvironment.entities.Place;
+import com.example.StudentEnvironment.entities.User;
+import com.example.StudentEnvironment.repositories.ExchangeRequestRepository;
+import com.example.StudentEnvironment.repositories.PlaceRepository;
+import com.example.StudentEnvironment.repositories.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ExchangeService {
+    private final ExchangeRequestRepository exchangeRequestRepository;
+    private final PlaceRepository placeRepository;
+    private final UserRepository userRepository;
+
+    /**
+     * Получает список всех входящих запросов на обмен для пользователя.
+     * @param user пользователь, которому направлены запросы
+     * @return список ExchangeRequest, направленных пользователю
+     */
+    public List<ExchangeRequest> findRequestsToUser(User user) {
+        return exchangeRequestRepository.findByToUser(user);
+    }
+    public void sendExchangeRequest(User from, User to) {
+        if (exchangeRequestRepository.existsByFromUser(from)) {
+            throw new IllegalStateException("Уже есть активный запрос");
+        }
+        if (from.getId().equals(to.getId())) {
+            throw new IllegalArgumentException("Нельзя отправить запрос самому себе");
+        }
+
+        ExchangeRequest request = ExchangeRequest.builder()
+                .fromUser(from)
+                .toUser(to)
+                .createdAt(LocalDateTime.now())
+                .build();
+        exchangeRequestRepository.save(request);
+    }
+
+    public void cancelExchangeRequest(User from) {
+        exchangeRequestRepository.deleteByFromUser(from);
+    }
+
+    @Transactional
+    public void confirmExchangeRequest(Long requestId) {
+        ExchangeRequest request = exchangeRequestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Запрос не найден"));
+
+        User from = request.getFromUser();
+        User to = request.getToUser();
+
+        Place placeFrom = placeRepository.findByUser(from);
+        Place placeTo = placeRepository.findByUser(to);
+
+        if (placeFrom == null || placeTo == null) {
+            throw new IllegalStateException("Один из пользователей не в очереди");
+        }
+
+        LocalDateTime temp = placeFrom.getTime();
+        placeFrom.setTime(placeTo.getTime());
+        placeTo.setTime(temp);
+
+        placeRepository.save(placeFrom);
+        placeRepository.save(placeTo);
+
+        from.setExchange_user(to);
+        to.setExchange_user(from);
+        userRepository.save(from);
+        userRepository.save(to);
+
+        exchangeRequestRepository.deleteByFromUserOrToUser(from, to);
+    }
+
+    public List<ExchangeRequest> getIncomingRequests(User user) {
+        return exchangeRequestRepository.findByToUser(user);
+    }
+}
+
+        
+/* ./services/GroupService.java */
+package com.example.StudentEnvironment.services;
+
+import com.example.StudentEnvironment.entities.Group;
+import com.example.StudentEnvironment.repositories.GroupRepository;
+import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+/**
+ * Сервис для управления сущностями Group
+ */
+@Service
+@AllArgsConstructor
+public class GroupService {
+    private final GroupRepository groupRepository;
+    private PasswordEncoder passwordEncoder;
+    /**
+     * Метод создания группы в таблице
+     * @param name название группы
+     */
+    public void create(String name) {
+        Group group = Group.builder()
+                .name(name)
+                .build();
+        groupRepository.save(group);
+    }
+    /**
+     * Метод проверки существования группы
+     * @param name название группы
+     * @return истина, если группа существует
+     */
+    public boolean exists(String name) {
+        List<Group> groups = groupRepository.findAll();
+        for (Group candidate : groups){
+            if (candidate.getName().equals(name)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Метод получения ID группы по названию
+     * @param name название группы
+     * @return ID группы, либо -1 если не найдена
+     */
+    public Long getIDByName(String name) {
+        List<Group> groups = groupRepository.findAll();
+        for (Group candidate : groups){
+            if (candidate.getName().equals(name)){
+                return candidate.getId();
+            }
+        }
+        return (long) -1;
+    }
+    /**
+     * Метод получения всех групп
+     * @return список всех групп
+     */
+    public List<Group> readAll() {
+        return groupRepository.findAll();
+    }
+    /**
+     * Метод удаления группы по ID
+     * @param id идентификатор группы
+     */
+    public void delete(Long id) {
+        groupRepository.deleteById(id);
+    }
+    /**
+     * Метод поиска группы по ID
+     * @param groupId идентификатор группы
+     * @return объект Group
+     */
+    public Group findById(Long groupId) {
+        return groupRepository.findById(groupId)
+                .orElseThrow(() -> new RuntimeException("Группа не найдена"));
+    }
+}
+
+        
+/* ./services/MessageService.java */
+package com.example.StudentEnvironment.services;
+
+import com.example.StudentEnvironment.entities.Message;
+import com.example.StudentEnvironment.entities.Group;
+import com.example.StudentEnvironment.entities.User;
+import com.example.StudentEnvironment.repositories.MessageRepository;
+import com.example.StudentEnvironment.repositories.GroupRepository;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.AllArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+/**
+ * Сервис для работы с сообщениями.
+ */
+@Service
+@AllArgsConstructor
+public class MessageService {
+    private final UserService userService;
+    private final GroupRepository groupRepository;
+    private final MessageRepository messageRepository;
+    /**
+     * Метод создания сообщения в таблице
+     * @param text текст
+     * @param time время
+     * @param group_id ID группы
+     */
+    public void create(String text, LocalDateTime time, Long group_id) {
+        Group group = groupRepository.findById(group_id)
+                .orElseThrow(() -> new RuntimeException("Группа не найдена"));
+        Message message = Message.builder()
+                .text(text)
+                .time(time)
+                .group(group)
+                .build();
+        messageRepository.save(message);
+    }
+
+
+    /**
+     * Метод проверки существования сообщения
+     * @param id ID сообщения
+     * @return истина или ложь
+     */
+    public boolean exists(Long id) {
+        List<Message> messages = messageRepository.findAll();
+        for (Message message : messages){
+            if (message.getId().equals(id)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    /**
+     * Метод получения всех сообщений
+     * @return список всех сообщений
+     */
+    public List<Message> readAll() {
+        return messageRepository.findAll();
+    }
+    /**
+     * Метод получения всех сообщений определенной группы по её ID
+     * @param id ID группы
+     * @return список сообщений группы
+     */
+    public List<Message> readAllByGroupId(Long id) {
+        List<Message> messages = messageRepository.findAll();
+        List<Message> filtered_messages = new ArrayList<>();
+        for(Message message : messages)
+        {
+            if(message.getGroup().getId().equals(id))
+            {
+                filtered_messages.add(message);
+            }
+        }
+        return filtered_messages;
+    }
+    /**
+     * Метод получения сообщения по ID
+     * @param message_id ID сообщения
+     * @return сообщение
+     */
+    public Message getMessageByID(Long message_id){
+        List<Message> messages = messageRepository.findAll();
+        for (Message message : messages){
+            if (message.getId().equals(message_id)){
+                return message;
+            }
+        }
+        return null;
+    }
+    /**
+     * Метод удаления сообщения по ID
+     * @param id ID сообщения
+     */
+    public void delete(Long id) {messageRepository.deleteById(id);}
+    /**
+     * Метод получения сообщений для пользователя
+     * @param username имя пользователя
+     * @return список сообщений
+     */
+    public List<Message> getMessagesForUser(String username) {
+        User user = userService.findByUsername(username);
+        return messageRepository.findByGroupId(user.getGroup().getId());
+    }
+    /**
+     * Метод создания сообщения от имени старосты
+     * @param text текст сообщения
+     * @param username имя пользователя (старосты)
+     */
+    public void createMessage(String text, String username) {
+        User user = userService.findByUsername(username);
+
+        if (!"HEADMAN".equals(user.getRole())) {
+            throw new AccessDeniedException("Only headman can create messages");
+        }
+
+        Message message = Message.builder()
+                .text(text)
+                .time(LocalDateTime.now())
+                .group(user.getGroup())
+                .build();
+
+        messageRepository.save(message);
+    }
+
+    /**
+     * Метод удаления сообщения, доступен только старосте своей группы
+     * @param messageId ID сообщения
+     * @param username имя пользователя (старосты)
+     */
+    public void deleteMessage(Long messageId, String username) {
+        User user = userService.findByUsername(username);
+        Message message = messageRepository.findById(messageId)
+                .orElseThrow(() -> new EntityNotFoundException("Message not found"));
+
+        if (!"HEADMAN".equals(user.getRole()) || !user.getGroup().equals(message.getGroup())) {
+            throw new AccessDeniedException("No permission to delete this message");
+        }
+
+        messageRepository.delete(message);
+    }
+
+}
+
+        
+/* ./services/PlaceService.java */
+package com.example.StudentEnvironment.services;
+
+import com.example.StudentEnvironment.entities.Place;
+import com.example.StudentEnvironment.entities.User;
+import com.example.StudentEnvironment.repositories.PlaceRepository;
+import com.example.StudentEnvironment.repositories.UserRepository;
+import jakarta.transaction.Transactional;
+import lombok.AllArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+/**
+ * Сервис для работы с очередью мест.
+ */
+@Service
+@AllArgsConstructor
+public class PlaceService {
+    private final UserRepository userRepository;
+    private final PlaceRepository placeRepository;
+    /**
+     * Метод создания места в таблице
+     * @param time время
+     * @param user_id ID пользователя
+     */
+    public void create(LocalDateTime time, Long user_id) {
+        User user = userRepository.findById(user_id)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+        Place place = Place.builder()
+                .time(time)
+                .user(user)
+                .build();
+        placeRepository.save(place);
+    }
+
+
+    /**
+     * Метод проверки существования места
+     * @param id ID места
+     * @return истина или ложь
+     */
+    public boolean exists(Long id) {
+        List<Place> places = placeRepository.findAll();
+        for (Place place : places){
+            if (place.getId().equals(id)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+
+    /**
+     * Метод получения всех мест
+     * @return список всех мест
+     */
+    public List<Place> readAll() {
+        return placeRepository.findAll();
+    }
+
+    /**
+     * Метод получения всех мест определенного пользователя
+     * @param id ID пользователя
+     * @return список мест пользователя
+     */
+    public List<Place> readAllByUserId(Long id) {
+        List<Place> places = placeRepository.findAll();
+        List<Place> filtered_places = new ArrayList<>();
+        for(Place place : places)
+        {
+            if(place.getUser().getId().equals(id))
+            {
+                filtered_places.add(place);
+            }
+        }
+        return filtered_places;
+    }
+    /**
+     * Метод получения места по ID
+     * @param place_id ID места
+     * @return место
+     */
+    public Place getPlaceByID(Long place_id){
+        List<Place> places = placeRepository.findAll();
+        for (Place place : places){
+            if (place.getId().equals(place_id)){
+                return place;
+            }
+        }
+        return null;
+    }
+    /**
+     * Метод удаления места. Доступен владельцу или старосте.
+     * @param placeId ID места
+     * @param currentUser текущий пользователь
+     */
+    public void deletePlace(Long placeId, User currentUser) {
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new RuntimeException("Place not found"));
+
+        boolean isOwner = place.getUser().getId().equals(currentUser.getId());
+        boolean isHeadman = currentUser.getRole().equals("HEADMAN");
+
+        if (!isOwner && !isHeadman) {
+
+            throw new AccessDeniedException("Недостаточно прав");
+        }
+
+        placeRepository.deleteById(placeId);
+        System.out.println("Удалили место");
+    }
+    /**
+     * Метод добавления пользователя в конец очереди
+     * @param user пользователь
+     */
+    public void addToEnd(User user) {
+        // Удаляем старое место, если есть
+        Place oldPlace = placeRepository.findByUser(user);
+        if (oldPlace != null) {
+            placeRepository.deleteById(oldPlace.getId());
+        }
+
+        // Находим самое позднее время в очереди
+        LocalDateTime maxTime = placeRepository.findMaxTime();
+        LocalDateTime newTime = (maxTime != null) ? maxTime.plusSeconds(1) : LocalDateTime.now();
+
+        // Проверяем, существует ли уже место для данного пользователя
+        Place existingPlace = placeRepository.findByUser(user);
+        if (existingPlace == null) {
+            // Сохраняем новое место
+            Place newPlace = new Place();
+            newPlace.setUser(user);
+            newPlace.setTime(newTime);
+            placeRepository.save(newPlace);
+        } else {
+            // Если место уже существует, просто обновляем время
+            existingPlace.setTime(newTime);
+            placeRepository.save(existingPlace);
+        }
+    }
+
+    /**
+     * Метод отправки заявки на обмен местами
+     * @param fromUser отправитель
+     * @param toPlaceId ID места, с которым хотят обменяться
+     */
+    public void requestExchange(User fromUser, Long toPlaceId) {
+        Place toPlace = placeRepository.findById(toPlaceId)
+                .orElseThrow(() -> new RuntimeException("Place not found"));
+
+        if (toPlace.getUser().getId().equals(fromUser.getId())) {
+            throw new IllegalArgumentException("Нельзя обмениваться с самим собой");
+        }
+
+        // fromUser хочет обменяться с toUser
+        fromUser.setExchange_user(toPlace.getUser());
+        userRepository.save(fromUser);
+    }
+
+    /**
+     * Метод вставки пользователя перед другим. Доступен только старосте.
+     * @param beforePlaceId ID места перед которым нужно вставить
+     * @param studentId ID студента
+     * @param headman текущий пользователь (должен быть старостой)
+     */
+    @Transactional
+    public void insertBefore(Long beforePlaceId, Long studentId, User headman) {
+        // Проверка на роль
+        if (!"HEADMAN".equals(headman.getRole())) {
+            throw new AccessDeniedException("Только староста может вставлять студентов");
+        }
+
+        // Поиск студента
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
+
+        // Поиск места, перед которым вставляем
+        Place beforePlace = placeRepository.findById(beforePlaceId)
+                .orElseThrow(() -> new RuntimeException("Place not found"));
+
+        // Если студент пытается вставить себя перед собой — ничего не делаем
+        if (beforePlace.getUser().getId().equals(student.getId())) {
+            System.out.println("Пользователь уже стоит на этом месте");
+            return;
+        }
+
+        // Назначаем новое время чуть раньше
+        LocalDateTime newTime = beforePlace.getTime().minusNanos(1);
+
+        // Либо обновляем время, либо создаём новую запись
+        Place place = placeRepository.findByUser(student);
+        if (place == null) {
+            place = new Place();
+            place.setUser(student);
+        }
+
+        place.setTime(newTime);
+        placeRepository.save(place);
+    }
+
+//    public void insertBefore(Long beforePlaceId, Long studentId, User headman) {
+//        if (!headman.getRole().equals("HEADMAN")) {
+//            throw new AccessDeniedException("Только староста может вставлять студентов");
+//        }
+//
+//        User student = userRepository.findById(studentId)
+//                .orElseThrow(() -> new RuntimeException("Student not found"));
+//
+//        // Удаляем старое место студента, если есть
+//        Place existingPlace = placeRepository.findByUser(student);
+//        if (existingPlace != null) {
+//            placeRepository.delete(existingPlace);
+//        }
+//
+//        Place beforePlace = placeRepository.findById(beforePlaceId)
+//                .orElseThrow(() -> new RuntimeException("Place not found"));
+//
+//        LocalDateTime newTime = beforePlace.getTime().minusNanos(1);
+////
+////        if (existingPlace == null) {
+////            Place newPlace = new Place();
+////            newPlace.setUser(student);
+////            newPlace.setTime(newTime);
+////            placeRepository.save(newPlace);
+////        } else {
+////            existingPlace.setTime(newTime);
+////            placeRepository.save(existingPlace);
+////        }
+//
+//
+//        Place place = placeRepository.findByUser(student);
+//
+//        if (place == null) {
+//            place = new Place();
+//            place.setUser(student);
+//        }
+//        place.setTime(beforePlace.getTime().minusNanos(1));
+//        placeRepository.save(place);
+//    }
+
+    /**
+     * Метод удаления места по ID
+     * @param id ID места
+     */
+    public void delete(Long id) {
+        placeRepository.deleteById(id);
+    }
+}
+
+        
+/* ./services/UserService.java */
+package com.example.StudentEnvironment.services;
+
+import com.example.StudentEnvironment.entities.Group;
+import com.example.StudentEnvironment.entities.User;
+import com.example.StudentEnvironment.repositories.GroupRepository;
+import com.example.StudentEnvironment.repositories.UserRepository;
+import lombok.AllArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+/**
+ * Сервис для работы с пользователями.
+ */
+@Service
+@AllArgsConstructor
+public class UserService {
+    private final UserRepository userRepository;
+    private final GroupRepository groupRepository;
+    private PasswordEncoder passwordEncoder;
+
+    /**
+     * Получить текущего авторизованного пользователя
+     * @return объект User
+     */
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        if (username == null || username.equals("anonymousUser")) {
+            throw new RuntimeException("Пользователь не авторизован");
+        }
+
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + username));
+    }
+    /**
+     * Метод создания пользователя в таблице
+     * @param username логин
+     * @param password пароль
+     * @param full_name ФИО
+     * @param role роль
+     * @param group_id ID группы
+     */
+    public void create(String username, String password, String full_name, String role, Long group_id) {
+        Group group = groupRepository.findById(group_id)
+                .orElseThrow(() -> new RuntimeException("Группа не найдена"));
+        User user = User.builder()
+                .username(username)
+                .password(password)
+                .full_name(full_name)
+                .role(role)
+                .group(group)
+                .build();
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepository.save(user);
+    }
+    /**
+     * Метод проверки существования пользователя
+     * @param username логин
+     * @return истина или ложь
+     */
+    public boolean exists(String username) {
+        List<User> users = userRepository.findAll();
+        for (User candidate : users){
+            if (candidate.getUsername().equals(username)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Метод получения ID пользователя по имени
+     * @param username логин
+     * @return ID
+     */
+    public Long getIDByName(String username) {
+        List<User> users = userRepository.findAll();
+        for (User candidate : users){
+            if (candidate.getUsername().equals(username)){
+                return candidate.getId();
+            }
+        }
+        return (long) -1;
+    }
+    /**
+     * Метод получения всех пользователей
+     * @return список пользователей
+     */
+    public List<User> readAll() {
+        return userRepository.findAll();
+    }
+    /**
+     * Метод удаления пользователя по ID
+     * @param id ID
+     */
+    public void delete(Long id) {
+        userRepository.deleteById(id);
+    }
+    /**
+     * Метод изменения пароля пользователя
+     * @param username логин
+     * @param newPassword новый пароль
+     */
+    public void changePassword(String username, String newPassword) {
+        List<User> users = userRepository.findAll();
+        User user = null;
+        for (User candidate : users){
+            if (candidate.getUsername().equals(username)){
+                user = candidate;
+                break;
+            }
+        }
+        if (user != null) {
+            System.out.println(user.getUsername());
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+        } else {
+            System.out.println("Пользователь не найден");
+        }
+    }
+    /**
+     * Метод получения пользователя по ID
+     * @param userId ID пользователя
+     * @return пользователь
+     */
+    public User findById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+    }
+    /**
+     * Метод получения пользователя по имени
+     * @param username логин
+     * @return пользователь
+     */
+    public User findByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+    }
+}
+
+        

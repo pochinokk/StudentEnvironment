@@ -5,6 +5,8 @@ import com.example.StudentEnvironment.entities.User;
 import com.example.StudentEnvironment.repositories.GroupRepository;
 import com.example.StudentEnvironment.repositories.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,22 @@ public class UserService {
     private final UserRepository userRepository;
     private final GroupRepository groupRepository;
     private PasswordEncoder passwordEncoder;
+
+    /**
+     * Получить текущего авторизованного пользователя
+     * @return объект User
+     */
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        if (username == null || username.equals("anonymousUser")) {
+            throw new RuntimeException("Пользователь не авторизован");
+        }
+
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден: " + username));
+    }
     /**
      * Метод создания пользователя в таблице
      * @param username логин

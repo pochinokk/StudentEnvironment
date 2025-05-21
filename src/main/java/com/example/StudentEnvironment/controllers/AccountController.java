@@ -1,9 +1,11 @@
 package com.example.StudentEnvironment.controllers;
 
 
+import com.example.StudentEnvironment.entities.ExchangeRequest;
 import com.example.StudentEnvironment.entities.Group;
 import com.example.StudentEnvironment.entities.User;
 import com.example.StudentEnvironment.entities.Place;
+import com.example.StudentEnvironment.services.ExchangeService;
 import com.example.StudentEnvironment.services.UserService;
 import com.example.StudentEnvironment.services.PlaceService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +21,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.List;
+
 /**
  * Контроллер, управляющий действиями на странице личного кабинета.
  */
@@ -28,6 +33,7 @@ public class AccountController {
     @Autowired
     private PlaceService placeService;
     private UserService userService;
+    private final ExchangeService exchangeService;
     /**
      * Обработка запроса на отображение страницы личного кабинета.
      *
@@ -52,6 +58,14 @@ public class AccountController {
         Group group = user.getGroup();
         model.addAttribute("group", group);
         model.addAttribute("requestURI", request.getRequestURI());
+        // Входящие запросы — кто отправил тебе запрос на обмен
+        User currentUser = userService.getCurrentUser();
+        List<ExchangeRequest> incomingRequests = exchangeService.findRequestsToUser(currentUser);
+        model.addAttribute("incomingRequests", incomingRequests);
+
+        // Есть ли исходящий запрос (к кому ты отправил)
+        boolean hasOutgoingRequest = currentUser.getExchange_user() != null;
+        model.addAttribute("hasOutgoingRequest", hasOutgoingRequest);
 
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals("ADMIN"));
@@ -101,68 +115,7 @@ public class AccountController {
 //            return "redirect:/account";
 //        }
 //    }
-    /**
-     * Удаление места администратором.
-     *
-     * @param place_id ID заказа
-     * @param model модель представления
-     * @param redirectAttributes атрибуты перенаправления
-     * @return редирект на страницу личного кабинета
-     */
-    @PostMapping("/delete_place")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public String delete_place(@RequestParam("id") Long place_id,
-                               Model model, RedirectAttributes redirectAttributes) {
 
-        if (placeService.exists(place_id)) {
-            placeService.delete(place_id);
-            redirectAttributes.addFlashAttribute("mes", "Заказ успешно удален");
-            return "redirect:/account";
-        } else {
-            redirectAttributes.addFlashAttribute("er", "Такого заказа нет");
-            return "redirect:/account";
-        }
-    }
-    /**
-     * Получение списка всех пользователей.
-     *
-     * @param model модель представления
-     * @param redirectAttributes атрибуты перенаправления
-     * @return редирект на страницу личного кабинета
-     */
-    @GetMapping("/users")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public String find_users(Model model, RedirectAttributes redirectAttributes) {
-        Iterable<User> users = userService.readAll();
-        redirectAttributes.addFlashAttribute("users", users);
-        return "redirect:/account";
-    }
-
-
-
-
-    /**
-     * Поиск места по ID администратором.
-     *
-     * @param place_id ID заказа
-     * @param model модель представления
-     * @param redirectAttributes атрибуты перенаправления
-     * @return редирект на страницу личного кабинета
-     */
-    @GetMapping("/find_place_by_ID")
-    @PreAuthorize("hasAuthority('ADMIN')")
-    public String find_place_by_ID(@RequestParam("id") Long place_id,
-                                   Model model, RedirectAttributes redirectAttributes) {
-        Place place  = placeService.getPlaceByID(place_id);
-        if (place != null) {
-            System.out.println("OK");
-            redirectAttributes.addFlashAttribute("place", place);
-            return "redirect:/account";
-        } else {
-            redirectAttributes.addFlashAttribute("er", "Такого заказа нет");
-            return "redirect:/account";
-        }
-    }
 //    /**
 //     * Поиск всех мест пользователя по имени.
 //     *
@@ -184,6 +137,28 @@ public class AccountController {
 //        redirectAttributes.addFlashAttribute("er", "Такого пользователя нет");
 //        return "redirect:/account";
 //    }
+
+
+    @PostMapping("/exchange/send")
+    public String sendExchange(@RequestParam Long toUserId) {
+        User from = userService.getCurrentUser();
+        User to = userService.findById(toUserId);
+        exchangeService.sendExchangeRequest(from, to);
+        return "redirect:/account";
+    }
+
+    @PostMapping("/exchange/cancel")
+    public String cancelExchange() {
+        User from = userService.getCurrentUser();
+        exchangeService.cancelExchangeRequest(from);
+        return "redirect:/account";
+    }
+
+    @PostMapping("/exchange/confirm")
+    public String confirmExchange(@RequestParam Long requestId) {
+        exchangeService.confirmExchangeRequest(requestId);
+        return "redirect:/account";
+    }
 }
 
 

@@ -33,6 +33,31 @@
 <!--                    </p>-->
 <!--                </div>-->
 <!--            </div>-->
+            <div th:if="${user.exchange_user != null}">
+                <p th:text="'Вы меняетесь с: ' + ${user.exchange_user.full_name}"></p>
+            </div>
+
+            <!-- Отображаем входящие запросы -->
+            <div th:if="${incomingRequests != null}">
+                <h3>Запросы на обмен:</h3>
+                <ul>
+                    <li th:each="req : ${incomingRequests}">
+                        <span th:text="${req.fromUser.full_name}"></span>
+                        <form th:action="@{/exchange/confirm}" method="post">
+                            <input type="hidden" name="requestId" th:value="${req.id}" />
+                            <button type="submit">Принять</button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Кнопка отмены запроса -->
+            <form th:if="${hasOutgoingRequest}" th:action="@{/exchange/cancel}" method="post">
+                <button type="submit">Отменить запрос</button>
+            </form>
+
+
+
 
         </main>
         <footer th:replace="fragments/footer :: footer"></footer>
