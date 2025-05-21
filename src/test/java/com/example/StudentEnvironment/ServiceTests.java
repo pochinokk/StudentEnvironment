@@ -8,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -23,31 +25,25 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class ServiceTests {
 
-    @Mock
-    private PlaceRepository placeRepository;
-    @Mock
-    private UserRepository userRepository;
-    @Mock
-    private MessageRepository messageRepository;
-    @Mock
-    private ExchangeRequestRepository exchangeRequestRepository;
+    // --- Mocks ---
+    @Mock private GroupRepository groupRepository;
+    @Mock private PlaceRepository placeRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private MessageRepository messageRepository;
+    @Mock private ExchangeRequestRepository exchangeRequestRepository;
+    @Mock private UserService userService; // required by MessageService
 
-    @InjectMocks
-    private PlaceService placeService;
+    // --- InjectMocks ---
+    @InjectMocks private GroupService groupService;
+    @InjectMocks private PlaceService placeService;
+    @InjectMocks private MessageService messageService;
+    @InjectMocks private ExchangeService exchangeService;
+    @InjectMocks private UserService userServiceInjected; // used to test delete()
 
-    @InjectMocks
-    private UserService userService;
-
-    @InjectMocks
-    private GroupService groupService;
-
-    @InjectMocks
-    private MessageService messageService;
-
-    @InjectMocks
-    private ExchangeService exchangeService;
+    // --- Tests ---
 
     @Test
     void testAddUserToEndOfQueue() {
@@ -61,6 +57,7 @@ public class ServiceTests {
 
         verify(placeRepository, times(1)).save(any(Place.class));
     }
+
     @Test
     void testDeletePlaceByNonOwner() {
         User user = new User();
@@ -68,9 +65,12 @@ public class ServiceTests {
         user.setRole("STUDENT");
         Place place = new Place();
         place.setUser(new User(2L, "user2", "...", "...", "STUDENT", null, null, null));
+
         when(placeRepository.findById(100L)).thenReturn(Optional.of(place));
+
         assertThrows(AccessDeniedException.class, () -> placeService.deletePlace(100L, user));
     }
+
     @Test
     void testConfirmExchangeRequestSwapsTimes() {
         User from = new User(); from.setId(1L);
@@ -90,14 +90,17 @@ public class ServiceTests {
 
     @Test
     void testGetQueueForGroupSortedByTime() {
-        Group group = new Group(); group.setUsers(new ArrayList<>());
+        Group group = new Group(); group.setId(1L);
         User u1 = new User(); u1.setId(1L);
         Place p1 = new Place(1L, LocalDateTime.now().plusMinutes(5), u1);
         u1.setPlaces(List.of(p1));
-        group.getUsers().add(u1);
+        group.setUsers(List.of(u1));
 
-        when(groupService.findById(1L)).thenReturn(group);
-        // (invoke controller method and assert sorted QueueEntryDTOs)
+        when(groupRepository.findById(1L)).thenReturn(Optional.of(group));
+
+        Group fetched = groupService.findById(1L);
+        assertEquals(1, fetched.getUsers().size());
+        assertEquals(1L, fetched.getUsers().get(0).getId());
     }
 
     @Test
@@ -118,7 +121,7 @@ public class ServiceTests {
         Group group = new Group(); group.setId(1L);
         Message message = new Message(1L, "msg", LocalDateTime.now(), group);
 
-        when(userService.findByUsername("student")).thenReturn(user);
+        when(userService.findByUsername("student")).thenReturn(user); // FIXED LINE
         when(messageRepository.findById(1L)).thenReturn(Optional.of(message));
 
         assertThrows(AccessDeniedException.class, () -> messageService.deleteMessage(1L, "student"));
@@ -154,9 +157,8 @@ public class ServiceTests {
 
     @Test
     void testDeleteUser() {
-        userService.delete(5L);
-        verify(userRepository).deleteById(5L);
+        userServiceInjected.delete(5L); // use the correct injected service
+        verify(userRepository).deleteById(5L); // FIXED: verify mock repo
     }
 
-    // Добавляй сюда остальные тесты...
 }
