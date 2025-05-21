@@ -161,4 +161,70 @@ public class ServiceTests {
         verify(userRepository).deleteById(5L); // FIXED: verify mock repo
     }
 
+    @Test
+    void testUserCanRemoveOwnPlace() {
+        User user = new User(); user.setId(1L); user.setRole("STUDENT");
+        Place place = new Place(); place.setId(100L); place.setUser(user);
+
+        when(placeRepository.findById(100L)).thenReturn(Optional.of(place));
+
+        assertDoesNotThrow(() -> placeService.deletePlace(100L, user));
+        verify(placeRepository).deleteById(100L);
+    }
+
+    @Test
+    void testHeadmanCanInsertStudentBeforeOther() {
+        // Arrange
+        User headman = new User();
+        headman.setId(1L);
+        headman.setRole("HEADMAN");
+
+        User student = new User();
+        student.setId(2L);
+
+        User beforeUser = new User();
+        beforeUser.setId(3L); // 👈 Important: Assign an ID
+
+        Place beforePlace = new Place(10L, LocalDateTime.now(), beforeUser);
+
+        when(userRepository.findById(2L)).thenReturn(Optional.of(student));
+        when(placeRepository.findById(10L)).thenReturn(Optional.of(beforePlace));
+        when(placeRepository.findByUser(student)).thenReturn(null);
+        when(placeRepository.findMaxTime()).thenReturn(LocalDateTime.now().plusMinutes(1));
+
+        // Act & Assert
+        assertDoesNotThrow(() -> placeService.insertBefore(10L, 2L, headman));
+
+        verify(placeRepository).save(any(Place.class));
+    }
+
+
+    @Test
+    void testHeadmanCanRemoveStudentPlace() {
+        User headman = new User(); headman.setId(1L); headman.setRole("HEADMAN");
+        User student = new User(); student.setId(2L); student.setRole("STUDENT");
+        Place place = new Place(); place.setId(101L); place.setUser(student);
+
+        when(placeRepository.findById(101L)).thenReturn(Optional.of(place));
+
+        assertDoesNotThrow(() -> placeService.deletePlace(101L, headman));
+        verify(placeRepository).deleteById(101L);
+    }
+
+    @Test
+    void testGetUserQueueReturnsCorrectList() {
+        User user = new User(); user.setId(1L);
+        Place p1 = new Place(); p1.setId(1L); p1.setUser(user);
+        Place p2 = new Place(); p2.setId(2L); p2.setUser(user);
+
+        when(placeRepository.findAll()).thenReturn(List.of(p1, p2));
+
+        List<Place> result = placeService.readAllByUserId(1L);
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(p1));
+        assertTrue(result.contains(p2));
+    }
+
+
 }
